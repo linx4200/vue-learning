@@ -52,7 +52,9 @@ function Element(id, initData) {
   }
 }
 
-var app = new Element('test', {
-  msg: 'hello',
-  what: 'world'
-})
+// var app = new Element('test', {
+//   msg: 'hello',
+//   what: 'world'
+// })
+
+export default '123';
