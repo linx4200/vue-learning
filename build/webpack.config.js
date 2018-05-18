@@ -5,6 +5,7 @@ const CleanWebpackPlugin = require('clean-webpack-plugin');
 const APP_DIR = path.resolve(__dirname, '../src');
 
 module.exports = {
+  target: 'node',
   entry: {
     app: './src/main.js'
   },
@@ -14,7 +15,6 @@ module.exports = {
     new HtmlWebpackPlugin({
       filename: 'index.html',
       template: 'index.html',
-      // inject: true
     })
   ],
   output: {

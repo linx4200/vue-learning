@@ -27,5 +27,7 @@
     "webpack-dev-middleware": "^1.12.0",
     "webpack-hot-middleware": "^2.20.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "component-emitter": "github:component/emitter"
+  }
 }

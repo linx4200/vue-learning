@@ -1,60 +1,163 @@
-var bindingMark = 'data-element-binding';
+var prefix      = 'sd',
+    Filters     = require('./filters'),
+    Directives  = require('./directives'),
+    selector    = Object.keys(Directives).map(function (d) {
+        return '[' + prefix + '-' + d + ']'
+    }).join()
 
-function Element(id, initData) {
-  var self = this;
-  var el = self.el = document.getElementById(id);
-  var bindings = {}; // the internal copy
-  var data = self.data = {}; // the external interface
+function Seed (opts) {
 
-  function markToken (match, variable) {
-    bindings[variable] = {};
-    return '<span ' + bindingMark + '="' + variable +'"></span>';
-  }
+    var self = this,
+        root = this.el = document.getElementById(opts.id),
+        els  = root.querySelectorAll(selector),
+        bindings = {} // internal real data
 
-  // Mustache
-  // 1. 替换 {{msg}} 为 <span data-element-binding="msg"> 
-  // 2. 同时 bindings['msg'] = {}
-  var content  = el.innerHTML.replace(/\{\{(.*)\}\}/g, markToken);
-  el.innerHTML = content;
-  
-  // 遍历 bindings
-  // $vm.data.msg = ''
-  for (var variable in bindings) {
-    bind(variable)
-  }
+    self.scope = {} // external interface
 
-  if (initData) {
-    for (var variable in initData) {
-      // 触发 setter, 修改 binding.msg 的 值，和对应 el 的 textContent
-      data[variable] = initData[variable]  
+    // process nodes for directives
+    ;[].forEach.call(els, processNode)
+    processNode(root)
+
+    // initialize all variables by invoking setters
+    for (var key in bindings) {
+        self.scope[key] = opts.scope[key]
     }
-  }
-  
-  function bind (variable) {
-    // 移除 bindingmark ( <span data-element-binding="msg"> )
-    bindings[variable].els = el.querySelectorAll('[' + bindingMark + '="' + variable + '"]');
-    [].forEach.call(bindings[variable].els, function (e) {
-      e.removeAttribute(bindingMark)
-    })
 
-    // 把 variable 都作为 $vm.data 的属性值
-    // 把 value 副本保存在 bindings 内
-    Object.defineProperty(data, variable, {
-      set: function (newVal) {
-        [].forEach.call(bindings[variable].els, function (e) {
-          bindings[variable].value = e.textContent = newVal
+    function processNode (el) {
+        cloneAttributes(el.attributes).forEach(function (attr) {
+            var directive = parseDirective(attr)
+            if (directive) {
+                bindDirective(self, el, bindings, directive)
+            }
         })
-      },
-      get: function () {
-        return bindings[variable].value
-      }
-    })
-  }
+    }
 }
 
-// var app = new Element('test', {
-//   msg: 'hello',
-//   what: 'world'
-// })
+// clone attributes so they don't change
+function cloneAttributes (attributes) {
+    return [].map.call(attributes, function (attr) {
+        return {
+            name: attr.name,
+            value: attr.value
+        }
+    })
+}
 
-export default '123';
+function bindDirective (seed, el, bindings, directive) {
+    el.removeAttribute(directive.attr.name)
+    var key = directive.key,
+        binding = bindings[key]
+    if (!binding) {
+        bindings[key] = binding = {
+            value: undefined,
+            directives: []
+        }
+    }
+    directive.el = el
+    binding.directives.push(directive)
+    // invoke bind hook if exists
+    if (directive.bind) {
+        directive.bind(el, binding.value)
+    }
+    if (!seed.scope.hasOwnProperty(key)) {
+        bindAccessors(seed, key, binding)
+    }
+}
+
+function bindAccessors (seed, key, binding) {
+    Object.defineProperty(seed.scope, key, {
+        get: function () {
+            return binding.value
+        },
+        set: function (value) {
+            binding.value = value
+            binding.directives.forEach(function (directive) {
+                if (value && directive.filters) {
+                    value = applyFilters(value, directive)
+                }
+                directive.update(
+                    directive.el,
+                    value,
+                    directive.argument,
+                    directive,
+                    seed
+                )
+            })
+        }
+    })
+}
+
+function parseDirective (attr) {
+    if (attr.name.indexOf(prefix) === -1) return
+
+    // parse directive name and argument
+    var noPrefix = attr.name.slice(prefix.length + 1),
+        argIndex = noPrefix.indexOf('-'),
+        dirname  = argIndex === -1
+            ? noPrefix
+            : noPrefix.slice(0, argIndex),
+        def = Directives[dirname],
+        arg = argIndex === -1
+            ? null
+            : noPrefix.slice(argIndex + 1)
+
+    // parse scope variable key and pipe filters
+    var exp = attr.value,
+        pipeIndex = exp.indexOf('|'),
+        key = pipeIndex === -1
+            ? exp.trim()
+            : exp.slice(0, pipeIndex).trim(),
+        filters = pipeIndex === -1
+            ? null
+            : exp.slice(pipeIndex + 1).split('|').map(function (filter) {
+                return filter.trim()
+            })
+
+    return def
+        ? {
+            attr: attr,
+            key: key,
+            filters: filters,
+            definition: def,
+            argument: arg,
+            update: typeof def === 'function'
+                ? def
+                : def.update
+        }
+        : null
+}
+
+function applyFilters (value, directive) {
+    if (directive.definition.customFilter) {
+        return directive.definition.customFilter(value, directive.filters)
+    } else {
+        directive.filters.forEach(function (filter) {
+            if (Filters[filter]) {
+                value = Filters[filter](value)
+            }
+        })
+        return value
+    }
+}
+
+var seed = {
+    create: function (opts) {
+        return new Seed(opts)
+    },
+    filters: Filters,
+    directives: Directives
+}
+
+var app = seed.create({
+    id: 'test',
+    // template
+    scope: {
+        msg: 'hello',
+        hello: 'WHWHWHW',
+        changeMessage: function () {
+        app.scope.msg = 'hola'
+        }
+    }
+})
+
+module.exports = seed;
