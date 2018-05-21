@@ -140,24 +140,10 @@ function applyFilters (value, directive) {
     }
 }
 
-var seed = {
+export default {
     create: function (opts) {
         return new Seed(opts)
     },
     filters: Filters,
     directives: Directives
 }
-
-var app = seed.create({
-    id: 'test',
-    // template
-    scope: {
-        msg: 'hello',
-        hello: 'WHWHWHW',
-        changeMessage: function () {
-        app.scope.msg = 'hola'
-        }
-    }
-})
-
-module.exports = seed;

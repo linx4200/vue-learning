@@ -7,7 +7,7 @@ const APP_DIR = path.resolve(__dirname, '../src');
 module.exports = {
   target: 'node',
   entry: {
-    app: './src/main.js'
+    app: './src/app.js'
   },
   devtool: 'inline-source-map',
   plugins: [
