@@ -4,7 +4,6 @@ var Directives = require('./directives');
 var Filter = require('./filters');
 
 function Seed (el, data) {
-
   if (typeof el === 'string') {
     el = document.querySelector(el)
   }
@@ -21,7 +20,7 @@ function Seed (el, data) {
   this._compileNode(el)
 
   // initialize all variables by invoking setters
-  for (var key in this.bindings) {
+  for (var key in this._bindings) {
     this.scope[key] = data[key]
   }
 }
@@ -29,7 +28,8 @@ function Seed (el, data) {
 Seed.prototype._compileNode = function (node) {
   var self = this;
   cloneAttributes(node.attributes).forEach(function (attr) {
-    var directive = Directive.parse(attr, config.prefix)
+
+    var directive = Directive.parse(attr)
     if (directive) {
       self._bind(node, directive)
     }

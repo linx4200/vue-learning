@@ -21,7 +21,6 @@ module.exports = {
         this.el.removeEventListener(event, handlers[event])
       }
       if (handler) {
-        handler = handler.bind(this.el)
         this.el.addEventListener(event, handler)
         handlers[event] = handler
       }
