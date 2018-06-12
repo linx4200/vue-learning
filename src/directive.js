@@ -1,5 +1,6 @@
-var Directives = require('./directives'),
-    Filters    = require('./filters')
+var config = require('./config');
+var Directives = require('./directives');
+var Filters    = require('./filters');
 
 var KEY_RE = /^[^\|]+/,
     FILTERS_RE = /\|[^\|]+/g
@@ -27,6 +28,7 @@ function Directive (def, attr, arg, key) {
             // TODO test performance against regex
             var tokens = filter.replace('|', '').trim().split(/\s+/)
             return {
+                name: tokens[0],
                 apply: Filters[tokens[0]],
                 args: tokens.length > 1 ? tokens.slice(1) : null
             }
@@ -43,33 +45,35 @@ Directive.prototype.update = function (value) {
 }
 
 Directive.prototype.applyFilters = function (value) {
-    var filtered = value
-    this.filters.forEach(function (filter) {
-      filtered = filter.apply(filtered, filter.args)
-    })
-    return filtered
+  var filtered = value
+  this.filters.forEach(function (filter) {
+    if (!filter.apply) throw new Error('Unknown filter: ' + filter.name)
+    filtered = filter.apply(filtered, filter.args)
+  })
+  return filtered
 }
 
 module.exports = {
     // make sure the directive and value is valid
-    parse: function (attr, prefix) {
-        
-        if (attr.name.indexOf(prefix) === -1) return null
+    parse: function (attr) {
 
-        var noprefix = attr.name.slice(prefix.length + 1),
-            argIndex = noprefix.indexOf('-'),
-            arg = argIndex === -1
-                ? null
-                : noprefix.slice(argIndex + 1),
-            name = arg
-                ? noprefix.slice(0, argIndex)
-                : noprefix,
-            def = Directives[name]
+      var prefix = config.prefix;
+      if (attr.name.indexOf(prefix) === -1) return null
 
-        var key = attr.value.match(KEY_RE)
-        
-        return def && key
-            ? new Directive(def, attr, arg, key[0].trim())
-            : null
+      var noprefix = attr.name.slice(prefix.length + 1),
+          argIndex = noprefix.indexOf('-'),
+          arg = argIndex === -1
+              ? null
+              : noprefix.slice(argIndex + 1),
+          name = arg
+              ? noprefix.slice(0, argIndex)
+              : noprefix,
+          def = Directives[name]
+
+      var key = attr.value.match(KEY_RE)
+      
+      return def && key
+        ? new Directive(def, attr, arg, key[0].trim())
+        : null
     }
 }

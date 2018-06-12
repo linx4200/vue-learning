@@ -10,13 +10,14 @@
 		</style>
 	</head>
 	<body>
-		<div id="test" sd-on-click="changeMessage | delegate .button">
-      <p id="1" sd-text="msg.wow | capitalize" sd-on-click="remove"></p>
-			<p id="2" sd-text="msg.wow | uppercase" class="button"></p>
-			<p id="3" sd-class-red="error" sd-text="hello"></p>
-			<div sd-each="todos">
-				<span sd-text="text"></span>
-			</div>
+		<div id="test" sd-seed="test" sd-on-click="changeMessage | delegate .button">
+      <p sd-text="msg.wow | capitalize" sd-on-click="remove"></p>
+			<p sd-text="msg.wow | uppercase" class="button"></p>
+			<p sd-text="total"></p>
+			<p sd-class-red="error" sd-text="hello"></p>
+			<ul sd-show="todos">
+				<li sd-each-todo="todos" sd-text="todo.text"></li>
+			</ul>
     </div>
 	</body>
 </html>

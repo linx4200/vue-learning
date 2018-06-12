@@ -1,116 +1,40 @@
-var prefix      = 'sd',
-    Directive     = require('./directive'),
-    Directives  = require('./directives'),
-    selector    = Object.keys(Directives).map(function (d) {
-      return '[' + prefix + '-' + d + ']'
-    }).join()
+var config = require('./config');
+var Seed = require('./seed');
+var Directives  = require('./directives');
+var Filters  = require('./filters');
 
-function Seed (opts) {
 
-    var self = this,
-        root = this.el = document.getElementById(opts.id),
-        els  = root.querySelectorAll(selector);
+var seeds = {}
 
-    self.scope = {} // external interface
-    self.bindings = {} // internal real data
+function bindSelector () {
+  // Object.keys(module.exports)  这个也太黑科技了
+  config.selector = Object.keys(module.exports).forEach(function(directive) {
 
-    // process nodes for directives
-    ;[].forEach.call(els, this.compileNode.bind(this))
-    this.compileNode(root)
-
-    // initialize all variables by invoking setters
-    for (var key in self.bindings) {
-      self.scope[key] = opts.scope[key]
-    }
-}
-
-Seed.prototype.compileNode = function (node) {
-  var self = this;
-  cloneAttributes(node.attributes).forEach(function (attr) {
-    var directive = Directive.parse(attr, prefix)
-    if (directive) {
-      self.bind(node, directive)
-    }
   })
 }
 
-Seed.prototype.bind = function (node, directive) {
-  directive.el = node
-  node.removeAttribute(directive.attr.name)
-
-  var key = directive.key;
-  var binding = this.bindings[key] || this.createBinding(key);
-
-  // add directive to this binding
-  binding.directives.push(directive)
-
-  if (directive.bind) {
-    directive.bind(node, binding.value)
-  }
-}
-
-Seed.prototype.createBinding = function (key) {
-  var binding = {
-    value: undefined,
-    directives : []
-  }
-
-  this.bindings[key] = binding
-
-  // bind accessor triggers to scope
-  Object.defineProperty(this.scope, key, {
-    get: function () {
-      return binding.value
-    },
-    set: function (value) {
-      binding.value = value
-      binding.directives.forEach(function (directive) {
-        directive.update(value)
-      })
+module.exports = {
+  seeds: seeds,
+  seed: function (id, opts) {
+    seeds[id] = opts
+  },
+  // 可以自定义 directive 和 filter 了
+  directive: function (name, fn) {
+    Directives[name] = fn
+  },
+  filter: function (name, fn) {
+    Filters[name] = fn
+  },
+  config: function (opts) {
+    for (var prop in opts) {
+      if (prop !== 'selector') {
+        config[prop] = opts[prop]
+      }
     }
-  })
-
-  return binding
-}
-
-Seed.prototype.dump = function () {
-  var data = {}
-  for (var key in this._bindings) {
-    data[key] = this._bindings[key].value
-  }
-  return data
-}
-
-Seed.prototype.destroy = function () {
-  for (var key in this._bindings) {
-    this._bindings[key].directives.forEach(unbind);
-  }
-  this.el.parentNode.remove(this.el)
-  function unbind (directive) {
-    if (directive.unbind) {
-      directive.unbind();
+  },
+  plant: function () {
+    for (var id in seeds) {
+      seeds[id] = new Seed(id, seeds[id])
     }
   }
-}
-
-// clone attributes so they don't change
-function cloneAttributes (attributes) {
-  return [].map.call(attributes, function (attr) {
-    return {
-      name: attr.name,
-      value: attr.value
-    }
-  })
-}
-
-export default {
-    create: function (opts) {
-      return new Seed(opts)
-    },
-    filter: function () {
-
-    },
-    directive: function () {
-
-    }
 }
