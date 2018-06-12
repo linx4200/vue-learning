@@ -3,22 +3,26 @@ var Directive = require('./directive');
 var Directives = require('./directives');
 var Filter = require('./filters');
 
-function Seed (id, opts) {
-  var self = this;
-  var root = this.el = document.getElementById(id);
-  // 选择出有 directive （sd-xxx） 的所有节点 
-  var els  = root.querySelectorAll(config.selector);
+function Seed (el, data) {
 
-  self.scope = {} // external interface
-  self._bindings = {} // internal real data
+  if (typeof el === 'string') {
+    el = document.querySelector(el)
+  }
+
+  this.el = el;
+  this._bindings = {}; // internal real data
+  this.scope = {}; // external interface
+
+  // 选择出有 directive （sd-xxx） 的所有节点 
+  var els = el.querySelectorAll(config.selector);
 
   // process nodes for directives
   ;[].forEach.call(els, this._compileNode.bind(this))
-  this._compileNode(root)
+  this._compileNode(el)
 
   // initialize all variables by invoking setters
-  for (var key in self.bindings) {
-    self.scope[key] = opts.scope[key]
+  for (var key in this.bindings) {
+    this.scope[key] = data[key]
   }
 }
 

@@ -3,38 +3,45 @@ var Seed = require('./seed');
 var Directives  = require('./directives');
 var Filters  = require('./filters');
 
-
 var seeds = {}
 
-function bindSelector () {
-  // Object.keys(module.exports)  这个也太黑科技了
-  config.selector = Object.keys(module.exports).forEach(function(directive) {
-
-  })
+function buildSelector () {
+  config.selector = Object.keys(Directives).map(function(directive) {
+    return '[' + config.prefix + '-' + directive + ']'
+  }).join()
 }
 
-module.exports = {
-  seeds: seeds,
-  seed: function (id, opts) {
-    seeds[id] = opts
-  },
-  // 可以自定义 directive 和 filter 了
-  directive: function (name, fn) {
-    Directives[name] = fn
-  },
-  filter: function (name, fn) {
-    Filters[name] = fn
-  },
-  config: function (opts) {
-    for (var prop in opts) {
-      if (prop !== 'selector') {
-        config[prop] = opts[prop]
+Seed.config = config;
+buildSelector();
+
+// 这是一个继承
+// 如何扩展一个类的例子
+Seed.extend = function (opts) {
+  var Spore = function () {
+      Seed.apply(this, arguments)
+      for (var prop in this.extensions) {
+          var ext = this.extensions[prop]
+          this.scope[prop] = (typeof ext === 'function')
+              ? ext.bind(this)
+              : ext
       }
-    }
-  },
-  plant: function () {
-    for (var id in seeds) {
-      seeds[id] = new Seed(id, seeds[id])
-    }
   }
+  Spore.prototype = Object.create(Seed.prototype)
+  Spore.prototype.extensions = {}
+  for (var prop in opts) {
+    Spore.prototype.extensions[prop] = opts[prop]
+  }
+  return Spore
 }
+
+Seed.directive = function (name, fn) {
+  Directives[name] = fn
+  // 为啥这里还要运行一次
+  buildSelector()
+}
+
+Seed.filter = function (name, fn) {
+  Filters[name] = fn
+}
+
+module.exports = Seed
