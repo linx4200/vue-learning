@@ -3,16 +3,7 @@ var Seed = require('./seed');
 var Directives  = require('./directives');
 var Filters  = require('./filters');
 
-var seeds = {}
-
-function buildSelector () {
-  config.selector = Object.keys(Directives).map(function(directive) {
-    return '[' + config.prefix + '-' + directive + ']'
-  }).join()
-}
-
 Seed.config = config;
-buildSelector();
 
 // 这是一个继承
 // 如何扩展一个类的例子
@@ -36,8 +27,6 @@ Seed.extend = function (opts) {
 
 Seed.directive = function (name, fn) {
   Directives[name] = fn
-  // 为啥这里还要运行一次
-  buildSelector()
 }
 
 Seed.filter = function (name, fn) {

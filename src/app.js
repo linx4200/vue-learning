@@ -5,8 +5,28 @@ Seed.filter('money', function (value) {
 })
 
 // define a seed
-var Todos = Seed.extend({
-  id: 0,
+var list = [
+  {
+    title: 'make this shit kinda work',
+    done: true
+  },
+  {
+    title: 'make this shit work',
+    done: false
+  },
+  {
+    title: 'more feature!',
+    done: false
+  }
+]
+
+var s = Date.now();
+
+var todos = new Seed('#test', {
+  total     : Math.random() * 100000,
+  'msg.wow' : 'wow',
+  hello     : 'hello',
+  todos     : list,
   changeMessage: function () {
     this.scope['msg.wow'] = 'hola'
   },
@@ -14,18 +34,5 @@ var Todos = Seed.extend({
     this.destroy()
   }
 })
-var todos = new Todos('#test', {
-  total     : 1000,
-  'msg.wow' : 'wow',
-  hello     : 'hello',
-  todos     : [
-    {
-      title: 'make this shit work',
-      done: false
-    },
-    {
-      title: 'make this shit kinda work',
-      done: true
-    }
-  ]
-})
+
+console.log(Date.now() - s + 'ms')

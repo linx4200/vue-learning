@@ -7,6 +7,9 @@
 			.red {
 				color: red;
 			}
+			.todo.done {
+				text-decoration: line-through;
+			}
 		</style>
 	</head>
 	<body>
@@ -16,7 +19,9 @@
 			<p sd-text="total"></p>
 			<p sd-class-red="error" sd-text="hello"></p>
 			<ul sd-show="todos">
-				<li sd-each-todo="todos" sd-text="todo.text"></li>
+				<li sd-each-todo="todos">
+					<span class="todo" sd-text="todo.title" sd-class-done="todo.done"></span>
+				</li>
 			</ul>
     </div>
 	</body>
