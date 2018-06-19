@@ -13,15 +13,20 @@
 		</style>
 	</head>
 	<body>
-		<div id="test" sd-seed="test" sd-on-click="changeMessage | delegate .button">
-      <p sd-text="msg.wow | capitalize" sd-on-click="remove"></p>
-			<p sd-text="msg.wow | uppercase" class="button"></p>
-			<p sd-text="total"></p>
-			<p sd-class-red="error" sd-text="hello"></p>
+    <div id="app" sd-controller="TodoList">
+			<p sd-text="msg | capitalize" sd-on="click:changeMessage"></p>
+			<p sd-text="msg | uppercase"></p>
+			<p sd-on="click:remove">bye</p>
+			<p sd-text="total | money"></p>
+			<p sd-class="red:error" sd-show="error">Error</p>
 			<ul sd-show="todos">
-				<li sd-each-todo="todos">
-					<span class="todo" sd-text="todo.title" sd-class-done="todo.done"></span>
-				</li>
+				<li class="todo"
+						sd-controller="Todo"
+						sd-each="todo:todos"
+						sd-class="done:todo.done"
+						sd-on="click:todo.toggle"
+						sd-text="todo.title"
+				></li>
 			</ul>
     </div>
 	</body>
