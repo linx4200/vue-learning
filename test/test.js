@@ -1,7 +1,7 @@
-const Vue = require('../src/main')
+var Seed = require('seed')
 
-describe('Vue', function() {
-  describe('should have a variable', function() {
-    assert.equal(Vue, 123)
-  });
-});
+describe('Seed', function () {
+  it('should have a extend method', function () {
+    assert.ok(Seed.extend)
+  })
+})

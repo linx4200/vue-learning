@@ -1,6 +1,6 @@
 var config = require('./config');
+var controllers = require('./controllers');
 var watchArray = require('./watchArray');
-var Seed = require('./seed');
 
 module.exports = {
   text: function (value) {
@@ -63,11 +63,20 @@ module.exports = {
       console.log(mutation)
     },
     buildItem: function (data, index, collection) {
-      var node = this.el.cloneNode(true)
-      var spore = new Seed(node, data, {
+      var Seed = require('./seed');
+      var node = this.el.cloneNode(true);
+      var ctrl = node.getAttribute(config.prefix + '-controller');
+      var Ctrl = ctrl ? controllers[ctrl] : Seed;
+
+      if (ctrl) {
+        node.removeAttribute(config.prefix + '-controller');
+      }
+
+      var spore = new Ctrl(node, data, {
         eachPrefixRe: this.prefixRE,
         parentScope: this.seed.scope
       })
+
       this.container.insertBefore(node, this.marker)
       collection[index] = spore.scope
       return spore
