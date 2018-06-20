@@ -13,18 +13,19 @@
 		</style>
 	</head>
 	<body>
-    <div id="app" sd-controller="TodoList">
-			<p sd-text="msg | capitalize" sd-on="click:changeMessage"></p>
+    <div id="app" sd-controller="TodoList" sd-on="click:changeMessage | delegate .button">
+			<p sd-text="msg | capitalize"></p>
 			<p sd-text="msg | uppercase"></p>
 			<p sd-on="click:remove">bye</p>
 			<p sd-text="total | money"></p>
+			<p class="button">Change Message</p>
 			<p sd-class="red:error" sd-show="error">Error</p>
 			<ul sd-show="todos">
 				<li class="todo"
 						sd-controller="Todo"
 						sd-each="todo:todos"
 						sd-class="done:todo.done"
-						sd-on="click:todo.toggle"
+						sd-on="click:changeMessage, click:todo.toggle"
 						sd-text="todo.title"
 				></li>
 			</ul>

@@ -1,5 +1,4 @@
 var config = require('./config');
-var controllers = require('./controllers');
 var watchArray = require('./watchArray');
 
 module.exports = {
@@ -15,17 +14,13 @@ module.exports = {
   on: {
     update: function (handler) {
       var event = this.arg;
-      if (!this.handlers) {
-        this.handlers = {}
-      }
-      var handlers = this.handlers
-      if (handlers[event]) {
-        this.el.removeEventListener(event, handlers[event])
+
+      if (this.handler) {
+        this.el.removeEventListener(event, this.handler)
       }
       if (handler) {
-        handler = handler.bind(this.seed);
         this.el.addEventListener(event, handler)
-        handlers[event] = handler
+        this.handler = handler
       }
     },
     unbind: function () {

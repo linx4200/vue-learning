@@ -30,8 +30,7 @@ Seed.controller = function (id, extensions) {
   if (controllers[id]) {
     console.warn('controller "' + id + '" was already registered and has been overwritten.')
   }
-  var c = controllers[id] = Seed.extend(extensions)
-  return c
+  controllers[id] = extensions
 }
 
 Seed.directive = function (name, fn) {
@@ -56,18 +55,7 @@ Seed.bootstrap = function (seeds) {
       console.warn('invalid element or selector: ' + seed.el)
     }
 
-    var ctrlid = el.getAttribute(config.prefix + '-controller');
-    var Controller = ctrlid ? controllers[ctrlid] : Seed;
-
-    if (!Controller) {
-      console.warn('controller ' + ctrlid + ' is not defined.');
-    }
-
-    if (ctrlid) {
-      el.removeAttribute(config.prefix + '-controller');
-    }
-
-    instances.push(new Controller(el, seed.data, seed.options))
+    instances.push(new Seed(el, seed.data, seed.options))
   })
 
   return instances.length > 1

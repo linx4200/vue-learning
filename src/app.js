@@ -4,18 +4,18 @@ Seed.filter('money', function (value) {
   return value ? '$' + value.toFixed(2) : ''
 })
 
-Seed.controller('TodoList', {
-  changeMessage: function () {
-    this.scope.msg = 'It works!'
-  },
-  remove: function () {
-    this.destroy()
+Seed.controller('TodoList', function (scope, seed) {
+  scope.changeMessage = function () {
+    scope.msg = 'It works!'
+  }
+  scope.remove = function () {
+    seed.destroy()
   }
 })
 
-Seed.controller('Todo', {
-  toggle: function () {
-    this.scope.done = !scope.done
+Seed.controller('Todo', function (scope) {
+  scope.toggle = function () {
+    scope.done = !scope.done
   }
 })
 
@@ -30,18 +30,18 @@ var app = Seed.bootstrap({
     total: 9999,
     error: true,
     todos: [
-        {
-            title: 'hello!',
-            done: true
-        },
-        {
-            title: 'hello!!',
-            done: false
-        },
-        {
-            title: 'hello!!!',
-            done: false
-        }
+      {
+        title: 'hello!',
+        done: true
+      },
+      {
+        title: 'hello!!',
+        done: false
+      },
+      {
+        title: 'hello!!!',
+        done: false
+      }
     ]
   }
 })
