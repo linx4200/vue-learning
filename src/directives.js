@@ -61,16 +61,17 @@ module.exports = {
     buildItem: function (data, index, collection) {
       var Seed = require('./seed');
       var node = this.el.cloneNode(true);
-      var ctrl = node.getAttribute(config.prefix + '-controller');
-      var Ctrl = ctrl ? controllers[ctrl] : Seed;
 
-      if (ctrl) {
-        node.removeAttribute(config.prefix + '-controller');
-      }
+      // var ctrl = node.getAttribute(config.prefix + '-controller');
+      // var Ctrl = ctrl ? controllers[ctrl] : Seed;
 
-      var spore = new Ctrl(node, data, {
+      // if (ctrl) {
+      //   node.removeAttribute(config.prefix + '-controller');
+      // }
+
+      var spore = new Seed(node, data, {
         eachPrefixRe: this.prefixRE,
-        parentScope: this.seed.scope
+        parentScope: this.seed
       })
 
       this.container.insertBefore(node, this.marker)

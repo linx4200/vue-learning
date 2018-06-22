@@ -32,7 +32,7 @@ function Seed (el, data, options) {
   this.el = el;
   this.scope = data; // external interface  就是现在的 data
   this._bindings = {}; // internal real data
-  this._options   = options || {}
+  this._options = options || {}
 
   var key;
   // keep a temporary copy for all the real data
@@ -68,7 +68,7 @@ Seed.prototype._compileNode = function (node, root) {
   } else if (node.attributes && node.attributes.length) {
     var eachExp = node.getAttribute(eachAttr);
     var ctrlExp = node.getAttribute(ctrlAttr);
-
+    console.log('==eachExp===', eachExp);
     if (eachExp) {
       // each block
       var binding = bindingParser.parse(eachAttr, eachExp)
@@ -80,7 +80,9 @@ Seed.prototype._compileNode = function (node, root) {
         self.scope[binding.key] = self._dataCopy[binding.key]
         delete self._dataCopy[binding.key]
       }
-    } else if (!ctrlExp || root) {
+    } else if (ctrlExp && !root) { // nested controllers
+      // TODO need to be clever here!
+    } else {
       // normal node (non-controller)
 
       // 把 querySelectorAll 改成了递归
