@@ -5,8 +5,9 @@ Seed.filter('money', function (value) {
 })
 
 Seed.controller('TodoList', function (scope, seed) {
+  console.log('controller invoked');
   scope.changeMessage = function () {
-    scope.msg = 'It works!'
+    scope.msg = (Math.random() * 100).toFixed(2) + '% awesomeness'
   }
   scope.remove = function () {
     seed.destroy()

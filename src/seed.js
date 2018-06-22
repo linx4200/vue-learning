@@ -35,9 +35,12 @@ function Seed (el, data, options) {
   this._options   = options || {}
 
   var key;
-  var dataCopy = {};
+  // keep a temporary copy for all the real data
+  // so we can overwrite the passed in data object
+  // with getter / setters.
+  this._dataCopy = {};
   for (key in data) {
-    dataCopy[key] = data[key];
+    this._dataCopy[key] = data[key];
   }
 
   // process nodes for bindings
@@ -45,9 +48,10 @@ function Seed (el, data, options) {
   this._compileNode(el, true);
 
   // initialize all variables by invoking setters
-  for (key in dataCopy) {
-    this.scope[key] = dataCopy[key]
+  for (key in this._dataCopy) {
+    this.scope[key] = this._dataCopy[key]
   }
+  delete this._dataCopy
 
   // copy in methods from controller
   if (controller) {
@@ -66,13 +70,26 @@ Seed.prototype._compileNode = function (node, root) {
     var ctrlExp = node.getAttribute(ctrlAttr);
 
     if (eachExp) {
-      // each
+      // each block
       var binding = bindingParser.parse(eachAttr, eachExp)
       if (binding) {
         self._bind(node, binding)
+        // need to set each block now so it can inherit
+        // parent node. i.e. the childSeeds must have been 
+        // initiated when parent scope setters are invoked
+        self.scope[binding.key] = self._dataCopy[binding.key]
+        delete self._dataCopy[binding.key]
       }
-    } else if (!ctrlExp || root) { // skip nested controllers
-      // normal node
+    } else if (!ctrlExp || root) {
+      // normal node (non-controller)
+
+      // 把 querySelectorAll 改成了递归
+      if (node.childNodes.length) {
+        each.call(node.childNodes, function(child) {
+          self._compileNode(child);
+        })
+      }
+
       // clone attributes because the list can change
       var attrs = map.call(node.attributes, function (attr) {
         return {
@@ -91,13 +108,6 @@ Seed.prototype._compileNode = function (node, root) {
         })
         if (valid) node.removeAttribute(attr.name)
       })
-
-      // 把 querySelectorAll 改成了递归
-      if (node.childNodes.length) {
-        each.call(node.childNodes, function(child) {
-          self._compileNode(child);
-        })
-      }
     }
   }
 }
