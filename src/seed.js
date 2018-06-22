@@ -41,16 +41,17 @@ function Seed (el, data, options) {
   }
 
   // process nodes for bindings
+  // first, child with sd-each directive
   this._compileNode(el, true);
-
-  // copy in methods from controller
-  if (controller) {
-    controller.call(null, this.scope, this);
-  }
 
   // initialize all variables by invoking setters
   for (key in dataCopy) {
     this.scope[key] = dataCopy[key]
+  }
+
+  // copy in methods from controller
+  if (controller) {
+    controller.call(null, this.scope, this);
   }
 }
 
@@ -112,15 +113,15 @@ Seed.prototype._bind = function (node, bindingInstance) {
   var key = bindingInstance.key;
   var epr = this._options.eachPrefixRE; // new RegExp('^' + this.arg + '.')
   var isEachKey = epr && epr.test(key);
-  var seed = this;
+  var scopeOwner = this;
 
   if (isEachKey) {
     key = key.replace(epr, '');
   } else if (epr) {
-    seed = this._options.parentSeed
+    scopeOwner = this._options.parentSeed
   }
 
-  var binding = seed._bindings[key] || seed._createBinding(key);
+  var binding = scopeOwner._bindings[key] || scopeOwner._createBinding(key);
 
   // add directive to this binding
   binding.instances.push(bindingInstance)
