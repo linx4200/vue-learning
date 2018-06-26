@@ -68,7 +68,7 @@ Seed.prototype._compileNode = function (node, root) {
   } else if (node.attributes && node.attributes.length) {
     var eachExp = node.getAttribute(eachAttr);
     var ctrlExp = node.getAttribute(ctrlAttr);
-    console.log('==eachExp===', eachExp);
+
     if (eachExp) {
       // each block
       var binding = bindingParser.parse(eachAttr, eachExp)
@@ -123,10 +123,10 @@ Seed.prototype._bind = function (node, bindingInstance) {
   bindingInstance.el = node
 
   var key = bindingInstance.key;
-  var epr = this._options.eachPrefixRE; // new RegExp('^' + this.arg + '.')
+  var epr = this._options.eachPrefixRe; // new RegExp('^' + this.arg + '.')
   var isEachKey = epr && epr.test(key);
   var scopeOwner = this;
-
+  
   if (isEachKey) {
     key = key.replace(epr, '');
   } else if (epr) {

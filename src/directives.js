@@ -32,7 +32,7 @@ module.exports = {
   },
   each: {
     bind: function () {
-      this.el['sd-block'] = true
+      this.el.removeAttribute(config.prefix + '-each')
       this.prefixRE = new RegExp('^' + this.arg + '.')
       var ctn = this.container = this.el.parentNode
       // createComment 是重点呀
@@ -71,7 +71,7 @@ module.exports = {
 
       var spore = new Seed(node, data, {
         eachPrefixRe: this.prefixRE,
-        parentScope: this.seed
+        parentSeed: this.seed
       })
 
       this.container.insertBefore(node, this.marker)
