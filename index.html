@@ -7,28 +7,53 @@
 			.red {
 				color: red;
 			}
-			.todo.done {
-				text-decoration: line-through;
-			}
+			.done {
+        text-decoration: line-through;
+      }
+      #app.all .all {
+        font-weight: bold;
+      }
+      #app.remaining .todo.done {
+        display: none;
+      }
+      #app.remaining .remaining {
+        font-weight: bold;
+      }
+      #app.completed .todo:not(.done) {
+        display: none;
+      }
+      #app.completed .completed {
+        font-weight: bold;
+      }
 		</style>
 	</head>
 	<body>
-    <div id="app" sd-controller="TodoList" sd-on="click:changeMessage | delegate .button">
-			<p sd-text="msg | capitalize"></p>
+    <div id="app" sd-controller="TodoList" class="all">
+			<!-- <p sd-text="msg | capitalize"></p>
 			<p sd-text="msg | uppercase"></p>
 			<p sd-on="click:remove">bye</p>
 			<p sd-text="total | money"></p>
 			<p class="button">Change Message</p>
-			<p sd-class="red:error" sd-show="error">Error</p>
+      <p sd-class="red:error" sd-show="error">Error</p> -->
+      
+      <div>
+        <input placeholder="What needs to be done?" sd-on="change:addTodo">
+      </div>
+
 			<ul sd-show="todos">
-				<li class="todo"
-						sd-controller="Todo"
-						sd-each="todo:todos"
-						sd-class="done:todo.done"
-						sd-on="click:changeMessage, click:todo.toggle"
-						sd-text="todo.title"
-				></li>
-			</ul>
+				<li class="todo" sd-each="todo:todos" sd-class="done:todo.done">
+          <input type="checkbox" sd-checked="todo.done" sd-on="change:toggleTodo">
+          <span sd-text="todo.text"></span>
+          <a sd-on="click:removeTodo">X</a>
+        </li>
+      </ul>
+      
+      <div id="footer">
+        Remaining: <span sd-text="remaining"></span><br>
+        <a class="all" sd-on="click:filter">Show All</a> |
+        <a class="remaining" sd-on="click:filter">Show Remaining</a> |
+        <a class="completed" sd-on="click:filter">Show Completed</a>
+      </div>
     </div>
 	</body>
 </html>

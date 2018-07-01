@@ -1,3 +1,4 @@
+var Emitter = require('emitter');
 var config = require('./config');
 var controllers   = require('./controllers');
 var bindingParser = require('./binding');
@@ -34,6 +35,11 @@ function Seed (el, data, options) {
   this._bindings = {}; // internal real data
   this._options = options || {}
 
+  if(options) {
+    this.parentSeed = options.parentSeed;
+    this.scopeNameRE = options.eachPrefixRE;
+  }
+
   var key;
   // keep a temporary copy for all the real data
   // so we can overwrite the passed in data object
@@ -58,6 +64,8 @@ function Seed (el, data, options) {
     controller.call(null, this.scope, this);
   }
 }
+
+Emitter(Seed.prototype);
 
 Seed.prototype._compileNode = function (node, root) {
   var self = this;
@@ -123,14 +131,14 @@ Seed.prototype._bind = function (node, bindingInstance) {
   bindingInstance.el = node
 
   var key = bindingInstance.key;
-  var epr = this._options.eachPrefixRe; // new RegExp('^' + this.arg + '.')
-  var isEachKey = epr && epr.test(key);
+  var snr = this.scopeNameRE; // new RegExp('^' + this.arg + '.')
+  var isEachKey = snr && snr.test(key);
   var scopeOwner = this;
   
   if (isEachKey) {
-    key = key.replace(epr, '');
-  } else if (epr) {
-    scopeOwner = this._options.parentSeed
+    key = key.replace(snr, '');
+  } else if (snr) {
+    scopeOwner = this.parentSeed
   }
 
   var binding = scopeOwner._bindings[key] || scopeOwner._createBinding(key);
