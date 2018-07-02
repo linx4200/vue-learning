@@ -1,10 +1,11 @@
 var Emitter = require('emitter');
 var config = require('./config');
 var controllers   = require('./controllers');
-var bindingParser = require('./binding');
+var DirectiveParser = require('./directive-parser');
 
-var map = Array.prototype.map
-var each = Array.prototype.forEach
+// var map = Array.prototype.map
+// var each = Array.prototype.forEach
+var slice = Array.prototype.slice
 
 // lazy init
 var ctrlAttr;
@@ -30,6 +31,7 @@ function Seed (el, data, options) {
     }
   }
 
+  el.seed = this
   this.el = el;
   this.scope = data; // external interface  就是现在的 data
   this._bindings = {}; // internal real data
@@ -37,7 +39,8 @@ function Seed (el, data, options) {
 
   if(options) {
     this.parentSeed = options.parentSeed;
-    this.scopeNameRE = options.eachPrefixRE;
+    this.eachPrefixRE = new RegExp('^' + options.eachPrefix + '.')
+    this.eachIndex = options.eachIndex
   }
 
   var key;
@@ -61,7 +64,7 @@ function Seed (el, data, options) {
 
   // copy in methods from controller
   if (controller) {
-    controller.call(null, this.scope, this);
+    controller.call(this, this.scope, this);
   }
 }
 
@@ -73,13 +76,13 @@ Seed.prototype._compileNode = function (node, root) {
   if(node.nodeType === 3) {
     // text  node
     self._compileTextNode(node)
-  } else if (node.attributes && node.attributes.length) {
+  } else {
     var eachExp = node.getAttribute(eachAttr);
     var ctrlExp = node.getAttribute(ctrlAttr);
 
     if (eachExp) {
       // each block
-      var binding = bindingParser.parse(eachAttr, eachExp)
+      var binding = DirectiveParser.parse(eachAttr, eachExp)
       if (binding) {
         self._bind(node, binding)
         // need to set each block now so it can inherit
@@ -90,26 +93,11 @@ Seed.prototype._compileNode = function (node, root) {
       }
     } else if (ctrlExp && !root) { // nested controllers
       // TODO need to be clever here!
-    } else {
-      // normal node (non-controller)
+    } else if (node.attributes && node.attributes.length) { // normal node (non-controller)
 
-      // 把 querySelectorAll 改成了递归
-      if (node.childNodes.length) {
-        each.call(node.childNodes, function(child) {
-          self._compileNode(child);
-        })
-      }
-
-      // clone attributes because the list can change
-      var attrs = map.call(node.attributes, function (attr) {
-        return {
-          name: attr.name,
-          expressions: attr.value.split(',')
-        }
-      })
-      attrs.forEach(function (attr) {
+      slice.call(node.attributes).forEach(function (attr) {
         var valid = false
-        attr.expressions.forEach(function(exp) {
+        attr.value.split(',').forEach(function (exp) {
           var binding = bindingParser.parse(attr.name, exp);
           if (binding) {
             valid = true
@@ -119,6 +107,14 @@ Seed.prototype._compileNode = function (node, root) {
         if (valid) node.removeAttribute(attr.name)
       })
     }
+
+    if (!eachExp && !ctrlExp) {
+      if (node.childNodes.length) {
+        slice.call(node.childNodes).forEach(function (child, i) {
+          self._compileNode(child)       
+        })
+      }
+    }
   }
 }
 
@@ -126,12 +122,12 @@ Seed.prototype._compileTextNode = function(node) {
   return node
 }
 
-Seed.prototype._bind = function (node, bindingInstance) {
-  bindingInstance.seed = this
-  bindingInstance.el = node
+Seed.prototype._bind = function (node, directive) {
+  directive.seed = this
+  directive.el = node
 
-  var key = bindingInstance.key;
-  var snr = this.scopeNameRE; // new RegExp('^' + this.arg + '.')
+  var key = directive.key;
+  var snr = this.eachPrefixRE; // new RegExp('^' + this.arg + '.')
   var isEachKey = snr && snr.test(key);
   var scopeOwner = this;
   
@@ -141,14 +137,16 @@ Seed.prototype._bind = function (node, bindingInstance) {
     scopeOwner = this.parentSeed
   }
 
+  directive.key = key
+
   var binding = scopeOwner._bindings[key] || scopeOwner._createBinding(key);
 
   // add directive to this binding
-  binding.instances.push(bindingInstance)
+  binding.instances.push(directive)
 
   // invoke bind hook if exists
-  if (bindingInstance.bind) {
-    bindingInstance.bind(binding.value)
+  if (directive.bind) {
+    directive.bind(binding.value)
   }
 }
 

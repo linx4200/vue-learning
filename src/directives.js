@@ -1,9 +1,9 @@
 var config = require('./config');
-var watchArray = require('./watchArray');
+var watchArray = require('./watch-array');
 
 module.exports = {
   text: function (value) {
-    this.el.textContent = value || ''
+    this.el.textContent = value === null ? '' : value.toString()
   },
   show: function (value) {
     this.el.style.display = value ? '' : 'none'
@@ -11,32 +11,58 @@ module.exports = {
   class: function (value, className) {
     this.el.classList[value ? 'add' : 'remove'](className)
   },
+  checked: {
+    bind: function () {
+      var el = this.el
+      var self = this
+      this.change = function () {
+        self.seed.scope[self.key] = el.checked
+      }
+      el.addEventListener('change', this.change)
+    },
+    update: function (value) {
+      this.el.checked = value
+    },
+    unbind: function () {
+      this.el.removeEventListener('change', this.change)
+    }
+  },
   on: {
     update: function (handler) {
+      var self = this;
       var event = this.arg;
 
       if (this.handler) {
         this.el.removeEventListener(event, this.handler)
       }
       if (handler) {
-        this.el.addEventListener(event, handler)
-        this.handler = handler
+        var proxy = function (e) {
+          handler({
+            el            : e.currentTarget,
+            originalEvent : e,
+            directive     : self,
+            seed          : self.seed
+          })
+        }
+        this.el.addEventListener(event, proxy)
+        this.handler = proxy
       }
     },
     unbind: function () {
       var event = this.arg;
       if (directive.handlers) {
-        this.el.removeEventListener(event, this.handlers[event])
+        this.el.removeEventListener(event, this.handler)
       }
     },
   },
   each: {
     bind: function () {
       this.el.removeAttribute(config.prefix + '-each')
-      this.prefixRE = new RegExp('^' + this.arg + '.')
+      // this.prefixRE = new RegExp('^' + this.arg + '.')
       var ctn = this.container = this.el.parentNode
       // createComment 是重点呀
-      this.marker = document.createComment('sd-each-' + this.arg + '-marker')
+      this.marker = document.createComment('sd-each-' + this.arg)
+      // this.marker = document.createComment('sd-each-' + this.arg + '-marker')
       ctn.insertBefore(this.marker, this.el)
       ctn.removeChild(this.el)
       this.childSeeds = []
@@ -69,8 +95,10 @@ module.exports = {
       // }
 
       var spore = new Seed(node, data, {
-        eachPrefixRe: this.prefixRE,
-        parentSeed: this.seed
+        eachPrefixRe: this.arg,
+        parentSeed: this.seed,
+        eachIndex: index,
+        eachCollection: collection
       })
 
       this.container.insertBefore(node, this.marker)
