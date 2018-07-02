@@ -3,7 +3,6 @@ var directives = require('./directives');
 var filters = require('./filters');
 
 var KEY_RE          = /^[^\|]+/,
-    LOCAL_KEY_RE    = /\.[^.]+$/,
     ARG_RE          = /([^:]+):(.+)$/,
     FILTERS_RE      = /\|[^\|]+/g,
     FILTER_TOKEN_RE = /[^\s']+|'[^']+'/g,

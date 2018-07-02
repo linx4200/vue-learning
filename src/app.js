@@ -19,7 +19,9 @@ var data = {
 }
 
 // Seed.controller
-Seed.plant('TodoList', function (scope, seed) {
+Seed.controller('TodoList', function (scope, seed) {
+  scope.filter = 'all'
+
   scope.remaining = scope.todos.reduce(function (count, todo) {
     return count + (todo.done ? 0 : 1)
   }, 0)
@@ -37,20 +39,18 @@ Seed.plant('TodoList', function (scope, seed) {
   scope.removeTodo = function (e) {
     var i = e.seed.eachIndex
     scope.todos.splice(i, 1)
+    scope.remaining -= e.seed.scope.done ? 0 : 1
   }
   scope.toggleTodo = function (e) {
     scope.remaining += e.seed.scope.done ? -1 : 1
   }
-  scope.filter = function (e) {
+  scope.setFilter = function (e) {
     var filter = e.el.className
-    seed.el.className = filter
   }
 })
-var now = Date.now()
 
 // Seed.bootstrap
-var app = Seed.sprout({
+var app = Seed.bootstrap({
   el: '#app',
   data: data
 })
-console.log(Date.now() - now)
