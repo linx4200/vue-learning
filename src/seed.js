@@ -1,4 +1,4 @@
-var Emitter = require('emitter');
+var Emitter = require('./emitter');
 var config = require('./config');
 var controllers   = require('./controllers');
 var DirectiveParser = require('./directive-parser');
@@ -98,7 +98,7 @@ Seed.prototype._compileNode = function (node, root) {
       slice.call(node.attributes).forEach(function (attr) {
         var valid = false
         attr.value.split(',').forEach(function (exp) {
-          var binding = bindingParser.parse(attr.name, exp);
+          var binding = DirectiveParser.parse(attr.name, exp);
           if (binding) {
             valid = true
             self._bind(node, binding);
