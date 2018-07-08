@@ -43,6 +43,7 @@ module.exports = {
       }
       if (handler) {
         var proxy = function (e) {
+          console.log('==proxy===', proxy);
           handler({
             el            : e.currentTarget,
             originalEvent : e,
@@ -56,13 +57,14 @@ module.exports = {
     },
     unbind: function () {
       var event = this.arg;
-      if (directive.handlers) {
+      if (this.handlers) {
         this.el.removeEventListener(event, this.handler)
       }
     },
   },
   each: {
     bind: function () {
+      console.log("====each====bind====");
       this.el.removeAttribute(config.prefix + '-each')
       // this.prefixRE = new RegExp('^' + this.arg + '.')
       var ctn = this.container = this.el.parentNode
@@ -74,32 +76,34 @@ module.exports = {
       this.childSeeds = []
     },
     update: function (collection) {
+
       if (this.childSeeds.length) {
         this.childSeeds.forEach(function(child) {
           child.destroy();
         })
         this.childSeeds = []
       }
+
+      // watchArray(collection, this.mutate.bind(this))
       watchArray(collection, this.mutate.bind(this))
+
       var self = this
       collection.forEach(function(item, i) {
         self.childSeeds.push(self.buildItem(item, i, collection));
       })
     },
     mutate: function (mutation) {
-      console.log(mutation)
+      // TODO: can't invoke event listeners
+      this.update(mutation.array);
     },
     buildItem: function (data, index, collection) {
       var Seed = require('./seed');
       var node = this.el.cloneNode(true);
 
-      // var ctrl = node.getAttribute(config.prefix + '-controller');
-      // var Ctrl = ctrl ? controllers[ctrl] : Seed;
-
       // if (ctrl) {
       //   node.removeAttribute(config.prefix + '-controller');
       // }
-
+      console.log('==data, index===', this.el, node, data, index)
       var spore = new Seed(node, data, {
         eachPrefixRe: this.arg,
         parentSeed: this.seed,

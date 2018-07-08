@@ -39,7 +39,7 @@ function Seed (el, data, options) {
 
   if(options) {
     this.parentSeed = options.parentSeed;
-    this.eachPrefixRE = new RegExp('^' + options.eachPrefix + '.')
+    this.eachPrefixRE = new RegExp('^' + options.eachPrefixRe + '.')
     this.eachIndex = options.eachIndex
   }
 
@@ -127,7 +127,7 @@ Seed.prototype._bind = function (node, directive) {
   directive.el = node
 
   var key = directive.key;
-  var snr = this.eachPrefixRE; // new RegExp('^' + this.arg + '.')
+  var snr = this.eachPrefixRE; // /^todo./
   var isEachKey = snr && snr.test(key);
   var scopeOwner = this;
   
@@ -137,7 +137,8 @@ Seed.prototype._bind = function (node, directive) {
     scopeOwner = this.parentSeed
   }
 
-  directive.key = key
+
+  // directive.key = key
 
   var binding = scopeOwner._bindings[key] || scopeOwner._createBinding(key);
 

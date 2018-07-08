@@ -25,6 +25,7 @@ Seed.controller('TodoList', function (scope, seed) {
   scope.remaining = scope.todos.reduce(function (count, todo) {
     return count + (todo.done ? 0 : 1)
   }, 0)
+
   scope.addTodo = function (e) {
     var text = e.el.value
     if (text) {
@@ -42,6 +43,7 @@ Seed.controller('TodoList', function (scope, seed) {
     scope.remaining -= e.seed.scope.done ? 0 : 1
   }
   scope.toggleTodo = function (e) {
+    e.seed.scope.done = !e.seed.scope.done;
     scope.remaining += e.seed.scope.done ? -1 : 1
   }
   scope.setFilter = function (e) {
@@ -50,7 +52,7 @@ Seed.controller('TodoList', function (scope, seed) {
 })
 
 // Seed.bootstrap
-var app = Seed.bootstrap({
+Seed.bootstrap({
   el: '#app',
   data: data
 })
