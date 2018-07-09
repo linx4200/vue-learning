@@ -84,7 +84,7 @@ module.exports = {
         this.childSeeds = []
       }
 
-      // watchArray(collection, this.mutate.bind(this))
+      if (!Array.isArray(collection)) return
       watchArray(collection, this.mutate.bind(this))
 
       var self = this
@@ -103,12 +103,13 @@ module.exports = {
       // if (ctrl) {
       //   node.removeAttribute(config.prefix + '-controller');
       // }
-      console.log('==data, index===', this.el, node, data, index)
-      var spore = new Seed(node, data, {
-        eachPrefixRe: this.arg,
+
+      var spore = new Seed(node, {
+        eachPrefixRE: new RegExp('^' + this.arg + '.'), // /^todo./
         parentSeed: this.seed,
-        eachIndex: index,
-        eachCollection: collection
+        index: index,
+        eachCollection: collection,
+        data: data
       })
 
       this.container.insertBefore(node, this.marker)

@@ -28,7 +28,7 @@
 		</style>
 	</head>
 	<body>
-    <div id="app" sd-controller="TodoList" sd-class="filter">
+    <div id="app" sd-controller="Todos" sd-class="filter">
       <div>
         <input placeholder="What needs to be done?" sd-on="change:addTodo">
       </div>
@@ -42,7 +42,10 @@
       </ul>
       
       <div id="footer">
-        Remaining: <span sd-text="remaining"></span><br>
+        Total: <span sd-text="total < todos"></span> |
+        Remaining: <span sd-text="remaining"></span> |
+        Completed: <span sd-text="completed < remaining total"></span>
+        <br>
         <a class="all" sd-on="click:setFilter">Show All</a> |
         <a class="remaining" sd-on="click:setFilter">Show Remaining</a> |
         <a class="completed" sd-on="click:setFilter">Show Completed</a>

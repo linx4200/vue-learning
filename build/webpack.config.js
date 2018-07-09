@@ -14,7 +14,11 @@ module.exports = {
     new CleanWebpackPlugin(['dist']),
     new HtmlWebpackPlugin({
       filename: 'index.html',
-      template: 'index.html',
+      template: 'dev/index.html',
+    }),
+    new HtmlWebpackPlugin({
+      filename: 'nested.html',
+      template: 'dev/nested.html',
     })
   ],
   output: {

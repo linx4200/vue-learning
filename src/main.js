@@ -2,13 +2,17 @@ var config = require('./config');
 var Seed = require('./seed');
 var directives  = require('./directives');
 var filters  = require('./filters');
-var controllers = require('./controllers');
 
-Seed.config = config;
+var controllers = config.controllers = {};
+var datum = config.datum = {};
+var api = {};
+
+// API
+api.config = config
 
 // 这是一个继承
 // 如何扩展一个类的例子
-Seed.extend = function (opts) {
+api.extend = function (opts) {
   var Spore = function () {
       Seed.apply(this, arguments)
       for (var prop in this.extensions) {
@@ -26,45 +30,44 @@ Seed.extend = function (opts) {
   return Spore
 }
 
-Seed.controller = function (id, extensions) {
+api.data = function (id, data) {
+  if (!data) return datum[id]
+  if (datum[id]) {
+    console.warn('data object "' + id + '"" already exists and has been overwritten.')
+  }
+  datum[id] = data
+}
+
+api.controller = function (id, extensions) {
+  if (!extensions) return controllers[id];
+
   if (controllers[id]) {
-    console.warn('controller "' + id + '" was already registered and has been overwritten.')
+    console.warn('controller "' + id + '" already exists and has been overwritten.')
   }
   controllers[id] = extensions
 }
 
-Seed.directive = function (name, fn) {
+api.directive = function (name, fn) {
   directives[name] = fn
 }
 
-Seed.filter = function (name, fn) {
+api.filter = function (name, fn) {
   filters[name] = fn
 }
 
-Seed.bootstrap = function (seeds) {
-  if (!Array.isArray(seeds)) seeds = [seeds]
-  var instances = []
-  seeds.forEach(function (seed) {
-    var el = seed.el
-
-    if (typeof el === 'string') {
-      el = document.querySelector(el)
+api.bootstrap = function () {
+  var app = {};
+  var n = 0;
+  var el;
+  var seed;
+  while (el = document.querySelector('[' + config.prefix + '-controller]')) {
+    seed = new Seed(el)
+    if (el.id) {
+      app['$' + el.id] = seed
     }
-
-    if (!el) {
-      console.warn('invalid element or selector: ' + seed.el)
-    }
-
-    instances.push(new Seed(el, seed.data, seed.options))
-  })
-
-  return instances.length > 1
-      ? instances
-      : instances[0]
+    n++
+  }
+  return n > 1 ? app : seed
 }
 
-// alias for an alternative API
-Seed.plant = Seed.controller
-Seed.sprout  = Seed.bootstrap
-
-module.exports = Seed
+module.exports = api;
