@@ -47,7 +47,7 @@ module.exports = {
             el            : e.currentTarget,
             originalEvent : e,
             directive     : self,
-            seed          : self.seed // TODO: 是要改成 e.currentTarget.seed 的，但是那样跑不起来
+            seed          : self.seed
           })
         }
         this.el.addEventListener(event, proxy)

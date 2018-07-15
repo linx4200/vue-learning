@@ -17,7 +17,6 @@ function Seed (el, options) {
     el = document.querySelector(el)
   }
 
-  el.seed = this
   this.el = el;
   // this.scope = data; // external interface  就是现在的 data
   this._bindings = {}; // internal real data
