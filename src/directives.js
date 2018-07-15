@@ -43,12 +43,11 @@ module.exports = {
       }
       if (handler) {
         var proxy = function (e) {
-          console.log('==proxy===', proxy);
           handler({
             el            : e.currentTarget,
             originalEvent : e,
             directive     : self,
-            seed          : self.seed
+            seed          : self.seed // TODO: 是要改成 e.currentTarget.seed 的，但是那样跑不起来
           })
         }
         this.el.addEventListener(event, proxy)
@@ -64,7 +63,6 @@ module.exports = {
   },
   each: {
     bind: function () {
-      console.log("====each====bind====");
       this.el.removeAttribute(config.prefix + '-each')
       // this.prefixRE = new RegExp('^' + this.arg + '.')
       var ctn = this.container = this.el.parentNode
@@ -77,12 +75,8 @@ module.exports = {
     },
     update: function (collection) {
 
-      if (this.childSeeds.length) {
-        this.childSeeds.forEach(function(child) {
-          child.destroy();
-        })
-        this.childSeeds = []
-      }
+      this.unbind(true);
+      this.childSeeds = [];
 
       if (!Array.isArray(collection)) return
       watchArray(collection, this.mutate.bind(this))
@@ -91,10 +85,6 @@ module.exports = {
       collection.forEach(function(item, i) {
         self.childSeeds.push(self.buildItem(item, i, collection));
       })
-    },
-    mutate: function (mutation) {
-      // TODO: can't invoke event listeners
-      this.update(mutation.array);
     },
     buildItem: function (data, index, collection) {
       var Seed = require('./seed');
@@ -108,13 +98,24 @@ module.exports = {
         eachPrefixRE: new RegExp('^' + this.arg + '.'), // /^todo./
         parentSeed: this.seed,
         index: index,
-        eachCollection: collection,
+        // eachCollection: collection,
         data: data
       })
 
       this.container.insertBefore(node, this.marker)
       collection[index] = spore.scope
       return spore
+    },
+    mutate: function (mutation) {
+      this.update(mutation.array);
+    },
+    unbind: function (rm) {
+      if (this.childSeeds.length) {
+        var fn = rm ? 'destroy' : 'unbind';
+        this.childSeeds.forEach(function (child) {
+          child[fn]();
+        })
+      }
     }
   }
 }

@@ -8,11 +8,9 @@ var todos = [
   { text: 'parse textnodes', done: false }
 ]
 
-Seed.data('test', { todos: todos });
-
 // Seed.controller
 Seed.controller('Todos', function (scope, seed) {
-  // scope.todos = todos;
+  scope.todos = todos;
   scope.filter = 'all'
 
   scope.remaining = todos.reduce(function (count, todo) {

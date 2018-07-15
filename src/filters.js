@@ -9,12 +9,18 @@ module.exports = {
     return value.toString().toUpperCase();
   },
 
+  // TODO probably there's a better way.
+  // Angular doesn't support delegate either
+  // any real performance gain?
   delegate: function (handler, args) {
     var selector = args[0]
     return function (e) {
-      console.log('triggered filter')
-      if (delegateCheck(e.target, e.currentTarget, selector)) {
-        handler.apply(this, arguments)
+      var oe = e.originalEvent;
+      var target = delegateCheck(oe.target, or.currentTarget, selector);
+      if (target) {
+        e.el = target;
+        e.seed = target.seed;
+        handler.call(this, e);
       }
     }
   }
@@ -22,7 +28,7 @@ module.exports = {
 
 function delegateCheck (current, top, selector) {
   if (current.webkitMatchesSelector(selector)) {
-    return true
+    return current
   } else if (current === top) {
     return false
   } else {
