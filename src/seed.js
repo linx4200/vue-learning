@@ -8,15 +8,10 @@ var slice = Array.prototype.slice;
 
 var ancestorKeyRE = /\^/g;
 var rootKeyRE = /^\$/;
-
-// lazy init
-var ctrlAttr;
-var eachAttr;
+var ctrlAttr = config.prefix + '-controller';
+var eachAttr = config.prefix + '-each';
 
 function Seed (el, options) {
-  // refresh
-  ctrlAttr = config.prefix + '-controller';
-  eachAttr = config.prefix + '-each';
 
   if (typeof el === 'string') {
     el = document.querySelector(el)
@@ -27,7 +22,6 @@ function Seed (el, options) {
   // this.scope = data; // external interface  就是现在的 data
   this._bindings = {}; // internal real data
   this._options = options || {};
-  this.components = {};
 
   if(options) {
     for (var op in options) {
@@ -35,7 +29,7 @@ function Seed (el, options) {
     }
   }
 
-  // initiate the scope
+  // initialize the scope object
   var dataPrefix = config.prefix + '-data';
   this.scope =
     (options && options.data)
@@ -43,15 +37,6 @@ function Seed (el, options) {
     || {};
 
   el.removeAttribute(dataPrefix);
-
-  // keep a temporary copy for all the real data
-  // so we can overwrite the passed in data object
-  // with getter/setters.
-  var key;
-  this._dataCopy = {}
-  for (key in this.scope) {
-    this._dataCopy[key] = this.scope[key]
-  }
 
   // if has controller
   var ctrlID = el.getAttribute(ctrlAttr);
@@ -62,24 +47,11 @@ function Seed (el, options) {
     el.removeAttribute(ctrlAttr)
   }
 
-  // process nodes for directives
-  // first, child with sd-each directive
+  // recursively process nodes for directives
   this._compileNode(el, true)
 
   if (controller) {
     controller.call(this, this.scope, this);
-  }
-
-
-  // initialize all variables by invoking setters
-  for (key in this._dataCopy) {
-    this.scope[key] = this._dataCopy[key]
-  }
-  delete this._dataCopy
-
-  // copy in methods from controller
-  if (controller) {
-    controller.call(this, this.scope, this)
   }
 }
 
@@ -99,12 +71,7 @@ Seed.prototype._compileNode = function (node, root) {
       // each block
       var binding = DirectiveParser.parse(eachAttr, eachExp)
       if (binding) {
-        self._bind(node, binding)
-        // need to set each block now so it can inherit
-        // parent node. i.e. the childSeeds must have been 
-        // initiated when parent scope setters are invoked
-        self.scope[binding.key] = self._dataCopy[binding.key]
-        delete self._dataCopy[binding.key]
+        self._bind(node, binding);
       }
     } else if (ctrlExp && !root) { // nested controllers
       // TODO need to be clever here!
@@ -117,7 +84,7 @@ Seed.prototype._compileNode = function (node, root) {
       }
 
     } else if (node.attributes && node.attributes.length) {
-      // normal node (non-controller)
+      // normal node
       slice.call(node.attributes).forEach(function (attr) {
         var valid = false
         attr.value.split(',').forEach(function (exp) {
@@ -131,6 +98,7 @@ Seed.prototype._compileNode = function (node, root) {
       })
     }
 
+    // recursively parse child nodes
     if (!eachExp && !ctrlExp) {
       if (node.childNodes.length) {
         slice.call(node.childNodes).forEach(function (child, i) {
@@ -191,11 +159,16 @@ Seed.prototype._bind = function (node, directive) {
   if (directive.bind) {
     directive.bind(binding.value)
   }
+
+  // set initial value
+  if (binding.value) {
+    directive.update(binding.value);
+  }
 }
 
 Seed.prototype._createBinding = function (key) {
   var binding = {
-    value: null,
+    value: this.scope[key],
     instances : []
   }
 

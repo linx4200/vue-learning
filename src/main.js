@@ -8,7 +8,7 @@ var datum = config.datum = {};
 var api = {};
 
 // API
-api.config = config
+// api.config = config
 
 // 这是一个继承
 // 如何扩展一个类的例子
@@ -55,7 +55,10 @@ api.filter = function (name, fn) {
   filters[name] = fn
 }
 
-api.bootstrap = function () {
+api.bootstrap = function (opts) {
+  if(opts) {
+    config.prefix = opts.prefix || config.prefix;
+  }
   var app = {};
   var n = 0;
   var el;
