@@ -52,11 +52,6 @@ import Seed from './main';
 // })
 
 // Seed.bootstrap
-Seed.bootstrap()
-
-
-
-var Seed = require('seed')
 
 Seed.controller('Grandpa', function (scope, seed) {
   scope.name = 'John'

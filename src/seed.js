@@ -1,6 +1,5 @@
 var Emitter = require('./emitter');
 var config = require('./config');
-var controllers   = require('./controllers');
 var DirectiveParser = require('./directive-parser');
 
 // var map = Array.prototype.map
@@ -21,17 +20,6 @@ function Seed (el, options) {
 
   if (typeof el === 'string') {
     el = document.querySelector(el)
-  }
-
-  // if has controller
-  var ctrlID = el.getAttribute(ctrlAttr);
-  var controller = null;
-  if (ctrlID) {
-    controller = controllers[ctrlID];
-    el.removeAttribute(ctrlAttr);
-    if (!controller) {
-      throw new Error('controller ' + ctrlID + ' is not defined.');
-    }
   }
 
   el.seed = this
@@ -128,8 +116,8 @@ Seed.prototype._compileNode = function (node, root) {
         self['$' + id] = seed;
       }
 
-    } else if (node.attributes && node.attributes.length) { // normal node (non-controller)
-
+    } else if (node.attributes && node.attributes.length) {
+      // normal node (non-controller)
       slice.call(node.attributes).forEach(function (attr) {
         var valid = false
         attr.value.split(',').forEach(function (exp) {
@@ -158,10 +146,12 @@ Seed.prototype._compileTextNode = function(node) {
 }
 
 Seed.prototype._bind = function (node, directive) {
+
   directive.seed = this
   directive.el = node
 
   var key = directive.key;
+  // snr for 
   var snr = this.eachPrefixRE; // /^todo./
   var isEachKey = snr && snr.test(key);
   var scopeOwner = this;
@@ -173,8 +163,8 @@ Seed.prototype._bind = function (node, directive) {
   if (snr && !isEachKey) {
     scopeOwner = this.parentSeed;
   } else {
-    var ancestors = key.match(ancestorKeyRE);
-    var root = key.match(rootKeyRE);
+    var ancestors = key.match(ancestorKeyRE);  //  /\^/g
+    var root = key.match(rootKeyRE); //  /^\$/;
     if (ancestors) {
       key = key.replace(ancestorKeyRE, '')
       var levels = ancestors.length;

@@ -60,6 +60,8 @@ api.bootstrap = function () {
   var n = 0;
   var el;
   var seed;
+
+  // 这个没有用呀，只会循环一次呀
   while (el = document.querySelector('[' + config.prefix + '-controller]')) {
     seed = new Seed(el)
     if (el.id) {
