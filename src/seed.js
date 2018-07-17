@@ -56,6 +56,16 @@ function Seed (el, options) {
       console.warn('controller ' + ctrlID + ' is not defined.');
     }
   }
+
+  // TODO: 我自己加的处理依赖
+  for(var key in this._bindings) {
+    const binding = this._bindings[key];
+    if (binding.deps) {
+      binding.deps.forEach(dep => {
+        // 搞不了了，这样不能把 binding.deps update 的时候，也调用 this._bindings[key] 的 update
+      })
+    }
+  }
 }
 
 Seed.prototype._compileNode = function (node, root) {
@@ -92,10 +102,10 @@ Seed.prototype._compileNode = function (node, root) {
         slice.call(node.attributes).forEach(function (attr) {
           var valid = false
           attr.value.split(',').forEach(function (exp) {
-            var binding = DirectiveParser.parse(attr.name, exp);
-            if (binding) {
+            var directive = DirectiveParser.parse(attr.name, exp);
+            if (directive) {
               valid = true
-              self._bind(node, binding);
+              self._bind(node, directive);
             }
           })
           if (valid) node.removeAttribute(attr.name)
@@ -156,7 +166,13 @@ Seed.prototype._bind = function (node, directive) {
   var binding = scopeOwner._bindings[key] || scopeOwner._createBinding(key);
 
   // add directive to this binding
-  binding.instances.push(directive)
+  binding.instances.push(directive);
+
+  // TODO: 我自己加的，处理依赖
+  if (directive.deps) {
+    console.log('====1====', directive.deps);
+    binding.deps = directive.deps;
+  }
 
   // invoke bind hook if exists
   if (directive.bind) {
@@ -173,7 +189,8 @@ Seed.prototype._createBinding = function (key) {
   var binding = {
     value: this.scope[key],
     changed: false,
-    instances : []
+    instances : [],
+    deps: null
   }
 
   this._bindings[key] = binding

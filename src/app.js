@@ -23,7 +23,8 @@ Seed.controller('Todos', function (scope, seed) {
   }
 
   scope.completed = function () {
-    return scope.todos.length - scope.remaining
+    // TODO: 依赖变化不会触发 setter
+    return scope.total() - scope.remaining
   }
 
   // event handlers

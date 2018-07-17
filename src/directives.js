@@ -34,6 +34,7 @@ module.exports = {
     }
   },
   on: {
+    fn: true, // TODO: 我自己加的，为了和 computed properties 区分
     update: function (handler) {
       var self = this;
       var event = this.arg;

@@ -2,7 +2,7 @@ var config = require('./config');
 var directives = require('./directives');
 var filters = require('./filters');
 
-var KEY_RE          = /^[^\|<]+/;
+var KEY_RE          = /^[^\|<]+/; // 排除了 < 
 var ARG_RE          = /([^:]+):(.+)$/;
 var FILTERS_RE      = /\|[^\|<]+/g;
 var FILTER_TOKEN_RE = /[^\s']+|'[^']+'/g;
@@ -55,16 +55,20 @@ function Directive (directiveName, expression) {
     this.filters = null
   }
 
-  var depExp = expression.match(DEPS_RE)
+  // 记录依赖
+  // completed < remaining total
+  // completed 依赖 remaining 和 total
+  // remaining 或 total 变化需要通知到 completed
+  var depExp = expression.match(DEPS_RE); // /<[^<\|]+/g;
   if (depExp) {
-    this.deps = depExp[0].slice(1).trim().split(/\s+/);
+    this.deps = depExp[0].slice(1).trim().split(/\s+/); // ['remaining', 'total']
   }
 }
 
 Directive.prototype.update = function (value) {
   // computed property
   if (typeof value === 'function' && !this.fn) {
-    value = value()
+    value = value();
   }
 
   // apply filters
