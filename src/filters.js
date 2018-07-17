@@ -26,12 +26,12 @@ module.exports = {
   // }
 }
 
-function delegateCheck (current, top, selector) {
-  if (current.webkitMatchesSelector(selector)) {
-    return current
-  } else if (current === top) {
-    return false
-  } else {
-    return delegateCheck(current.parentNode, top, selector)
-  }
-}
+// function delegateCheck (current, top, selector) {
+//   if (current.webkitMatchesSelector(selector)) {
+//     return current
+//   } else if (current === top) {
+//     return false
+//   } else {
+//     return delegateCheck(current.parentNode, top, selector)
+//   }
+// }

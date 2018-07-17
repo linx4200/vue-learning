@@ -7,7 +7,7 @@ var DirectiveParser = require('./directive-parser');
 var slice = Array.prototype.slice;
 
 var ancestorKeyRE = /\^/g;
-var rootKeyRE = /^\$/;
+// var rootKeyRE = /^\$/;
 var ctrlAttr = config.prefix + '-controller';
 var eachAttr = config.prefix + '-each';
 
@@ -22,10 +22,10 @@ function Seed (el, options) {
   this._bindings = {}; // internal real data
   this._options = options || {};
 
-  if(options) {
-    for (var op in options) {
-      this[op] = options[op];
-    }
+  // copy options
+  options = options || {}
+  for (var op in options) {
+    this[op] = options[op];
   }
 
   // initialize the scope object
@@ -37,20 +37,24 @@ function Seed (el, options) {
 
   el.removeAttribute(dataPrefix);
 
-  // if has controller
-  var ctrlID = el.getAttribute(ctrlAttr);
-  var controller = null;
-  if (ctrlID) {
-    controller = config.controllers[ctrlID]
-    if (!controller) console.warn('controller ' + ctrlID + ' is not defined.')
-    el.removeAttribute(ctrlAttr)
-  }
+  this.scope.$seed = this;
+  this.scope.$destroy = this._destroy.bind(this);
+  this.scope.$dump = this._dump.bind(this);
+  this.scope.$index = options.index;
 
   // recursively process nodes for directives
   this._compileNode(el, true)
 
-  if (controller) {
-    controller.call(this, this.scope, this);
+  // if has controller
+  var ctrlID = el.getAttribute(ctrlAttr);
+  if (ctrlID) {
+    el.removeAttribute(ctrlAttr);
+    var controller = config.controllers[ctrlID];
+    if (controller) {
+      controller.call(this, this.scope, this);
+    } else {
+      console.warn('controller ' + ctrlID + ' is not defined.');
+    }
   }
 }
 
@@ -80,23 +84,25 @@ Seed.prototype._compileNode = function (node, root) {
         self['$' + id] = seed;
       }
 
-    } else if (node.attributes && node.attributes.length) {
+    } else {
       // normal node
-      slice.call(node.attributes).forEach(function (attr) {
-        var valid = false
-        attr.value.split(',').forEach(function (exp) {
-          var binding = DirectiveParser.parse(attr.name, exp);
-          if (binding) {
-            valid = true
-            self._bind(node, binding);
-          }
-        })
-        if (valid) node.removeAttribute(attr.name)
-      })
-    }
 
-    // recursively parse child nodes
-    if (!eachExp && !ctrlExp) {
+      // parse if has attributes
+      if (node.attributes && node.attributes.length) {
+        slice.call(node.attributes).forEach(function (attr) {
+          var valid = false
+          attr.value.split(',').forEach(function (exp) {
+            var binding = DirectiveParser.parse(attr.name, exp);
+            if (binding) {
+              valid = true
+              self._bind(node, binding);
+            }
+          })
+          if (valid) node.removeAttribute(attr.name)
+        })
+      }
+
+      // recursively parse child nodes
       if (node.childNodes.length) {
         slice.call(node.childNodes).forEach(function (child, i) {
           self._compileNode(child)       
@@ -129,7 +135,7 @@ Seed.prototype._bind = function (node, directive) {
     scopeOwner = this.parentSeed;
   } else {
     var ancestors = key.match(ancestorKeyRE);  //  /\^/g
-    var root = key.match(rootKeyRE); //  /^\$/;
+    var root = key.charAt(0) === '$';
     if (ancestors) {
       key = key.replace(ancestorKeyRE, '')
       var levels = ancestors.length;
@@ -137,7 +143,7 @@ Seed.prototype._bind = function (node, directive) {
         scopeOwner = scopeOwner.parentSeed;
       }
     } else if (root) {
-      key = key.replace(rootKeyRE, '');
+      key = key.slice(1);
       while (scopeOwner.parentSeed) {
         scopeOwner = scopeOwner.parentSeed;
       }
@@ -166,6 +172,7 @@ Seed.prototype._bind = function (node, directive) {
 Seed.prototype._createBinding = function (key) {
   var binding = {
     value: this.scope[key],
+    changed: false,
     instances : []
   }
 
@@ -177,7 +184,10 @@ Seed.prototype._createBinding = function (key) {
       return binding.value
     },
     set: function (value) {
-      binding.value = value
+      // 为什么 value 会等于 binding ?
+      if (value === binding) return;
+      binding.changed = true;
+      binding.value = value;
       binding.instances.forEach(function (instance) {
         instance.update(value)
       })
@@ -187,7 +197,7 @@ Seed.prototype._createBinding = function (key) {
   return binding
 }
 
-Seed.prototype.unbind = function () {
+Seed.prototype._unbind = function () {
   var unbind = function (instance) {
     if (instance.unbind) {
       instance.unbind()
@@ -196,19 +206,39 @@ Seed.prototype.unbind = function () {
   for (var key in this._bindings) {
     this._bindings[key].instances.forEach(unbind)
   }
-  if (this.childSeeds && this.childSeeds.length) {
-    this.childSeeds.forEach(function (child) {
-      child.unbind();
-    })
-  }
+  // if (this.childSeeds && this.childSeeds.length) {
+  //   this.childSeeds.forEach(function (child) {
+  //     child.unbind();
+  //   })
+  // }
 }
 
-Seed.prototype.destroy = function () {
-  this.unbind()
+Seed.prototype._destroy = function () {
+  this._unbind()
   this.el.parentNode.removeChild(this.el)
   if (this.parentSeed && this.id) {
     delete this.parentSeed['$' + this.id]
   }
+}
+
+Seed.prototype._dump = function () {
+  var dump = {};
+  var val;
+  var subDump = function (scope) {
+      return scope.$dump()
+    };
+  for (var key in this.scope) {
+    if (key.charAt(0) !== '$') {
+      val = this._bindings[key]
+      if (!val) continue
+      if (Array.isArray(val)) {
+        dump[key] = val.map(subDump)
+      } else {
+        dump[key] = this._bindings[key].value
+      }
+    }
+  }
+  return dump
 }
 
 Emitter(Seed.prototype);

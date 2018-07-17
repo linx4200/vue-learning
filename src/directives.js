@@ -111,7 +111,7 @@ module.exports = {
     },
     unbind: function (rm) {
       if (this.childSeeds.length) {
-        var fn = rm ? 'destroy' : 'unbind';
+        var fn = rm ? '_destroy' : '_unbind';
         this.childSeeds.forEach(function (child) {
           child[fn]();
         })
