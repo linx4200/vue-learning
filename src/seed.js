@@ -18,6 +18,7 @@ function Seed (el, options) {
   }
 
   this.el = el;
+  el.seed = this;
   // this.scope = data; // external interface  就是现在的 data
   this._bindings = {}; // internal real data
   this._options = options || {};
@@ -88,7 +89,7 @@ Seed.prototype._compileNode = function (node, root) {
       // TODO need to be clever here!
 
       var id = node.id;
-      var seed = new Seed(node, { parentSeed: self});
+      var seed = new Seed(node, { child: true, parentSeed: self});
 
       if (id) {
         self['$' + id] = seed;
@@ -231,7 +232,8 @@ Seed.prototype._unbind = function () {
 }
 
 Seed.prototype._destroy = function () {
-  this._unbind()
+  this._unbind();
+  delete this.el.seed;
   this.el.parentNode.removeChild(this.el)
   if (this.parentSeed && this.id) {
     delete this.parentSeed['$' + this.id]
