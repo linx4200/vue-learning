@@ -41,14 +41,14 @@ Seed.controller('Todos', function (scope, seed) {
   }
 
   scope.removeTodo = function (e) {
-    scope.todos.splice(e.seed.index, 1);
-    scope.remaining -= e.seed.scope.done ? 0 : 1;
+    scope.todos.splice(e.scope.$index, 1);
+    scope.remaining -= e.scope.done ? 0 : 1;
     scope.total = scope.todos.length;
   }
 
   scope.toggleTodo = function (e) {
-    e.seed.scope.done = !e.seed.scope.done;
-    scope.remaining += e.seed.scope.done ? -1 : 1;
+    e.seed.scope.done = !e.scope.done;
+    scope.remaining += e.scope.done ? -1 : 1;
   }
 
   scope.setFilter = function (e) {

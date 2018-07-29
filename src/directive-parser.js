@@ -7,7 +7,6 @@ var ARG_RE          = /([^:]+):(.+)$/;
 var FILTERS_RE      = /\|[^\|<]+/g;
 var FILTER_TOKEN_RE = /[^\s']+|'[^']+'/g;
 var DEPS_RE         = /<[^<\|]+/g;
-var QUOTE_RE        = /'/;
 
 function Directive (directiveName, expression) {
 
@@ -44,7 +43,7 @@ function Directive (directiveName, expression) {
           var tokens = filter.slice(1)
               .match(FILTER_TOKEN_RE)
               .map(function (token) {
-                return token.replace(QUOTE_RE, '').trim()
+                return token.replace(/'/, '').trim()
               })
           return {
             name  : tokens[0],
