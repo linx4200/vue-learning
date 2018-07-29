@@ -44,7 +44,7 @@ function Seed (el, options) {
   this.scope.$index = options.index;
 
   // recursively process nodes for directives
-  this._compileNode(el, true)
+  this._compileNode(el, true);
 
   // if has controller
   var ctrlID = el.getAttribute(ctrlAttr);
@@ -171,7 +171,6 @@ Seed.prototype._bind = function (node, directive) {
 
   // TODO: 我自己加的，处理依赖
   if (directive.deps) {
-    console.log('====1====', directive.deps);
     binding.deps = directive.deps;
   }
 

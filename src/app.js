@@ -8,6 +8,7 @@ var todos = [
   { text: 'parse textnodes', done: false }
 ]
 
+// controller 的作用就是赋值
 // Seed.controller
 Seed.controller('Todos', function (scope, seed) {
   scope.todos = todos;
@@ -18,35 +19,38 @@ Seed.controller('Todos', function (scope, seed) {
   }, 0)
 
   // computed properties
-  scope.total = function () {
-    return scope.todos.length
-  }
+  scope.total = todos.length;
 
   scope.completed = function () {
-    // TODO: 依赖变化不会触发 setter
-    return scope.total() - scope.remaining
+    // TODO: 依赖变化(total 和 remaining 变化)不会触发 setter
+    return scope.total - scope.remaining
   }
 
   // event handlers
   scope.addTodo = function (e) {
     var text = e.el.value
     if (text) {
-      e.el.value = ''
+      e.el.value = '';
       scope.todos.push({
         text: text,
         done: false
-      })
-      scope.remaining++
+      });
+      scope.remaining++;
+      scope.total = scope.todos.length;;
     }
   }
+
   scope.removeTodo = function (e) {
-    scope.todos.splice(e.seed.index, 1)
-    scope.remaining -= e.seed.scope.done ? 0 : 1
+    scope.todos.splice(e.seed.index, 1);
+    scope.remaining -= e.seed.scope.done ? 0 : 1;
+    scope.total = scope.todos.length;
   }
+
   scope.toggleTodo = function (e) {
     e.seed.scope.done = !e.seed.scope.done;
-    scope.remaining += e.seed.scope.done ? -1 : 1
+    scope.remaining += e.seed.scope.done ? -1 : 1;
   }
+
   scope.setFilter = function (e) {
     scope.filter = e.el.className;
   }

@@ -70,7 +70,7 @@ module.exports = {
       var self = this;
       var event = this.arg;
       var selector = this.selector;
-      var elegator = this.delegator; // if this.seed.each
+      var delegator = this.delegator; // if this.seed.each
       if (delegator) {
           // for each blocks, delegate for better performance
           if (!delegator[selector]) {
