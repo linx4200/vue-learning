@@ -1,59 +1,76 @@
 var config = require('../config');
 
-var mutationHandlers = {
-    push: function (m) {
-        var self = this
-        m.args.forEach(function (data, i) {
-            var seed = self.buildItem(data, self.collection.length + i)
-            self.container.insertBefore(seed.el, self.marker)
-        })
-    },
-    pop: function (m) {
-        m.result.$destroy()
-    },
-    unshift: function (m) {
-        var self = this
-        m.args.forEach(function (data, i) {
-            var seed = self.buildItem(data, i)
-            self.container.insertBefore(seed.el, self.collection[m.args.length].$seed.el)
-        })
-        self.reorder()
-    },
-    shift: function (m) {
-        m.result.$destroy()
-        var self = this
-        self.reorder()
-    },
-    splice: function (m) {
-        var self = this
-        m.result.forEach(function (scope) {
-            scope.$destroy()
-        })
-        if (m.args.length > 2) {
-            m.args.slice(2).forEach(function (data, i) {
-                var seed  = self.buildItem(data, i),
-                    index = m.args[0] - m.args[1] + (m.args.length - 1),
-                    ref   = self.collection[index]
-                          ? self.collection[index].$seed.el
-                          : self.marker
-                self.container.insertBefore(seed.el, ref)
-            })
-        }
-        self.reorder()
-    },
-    sort: function () {
-        var self = this
-        self.collection.forEach(function (scope, i) {
-            scope.$index = i
-            self.container.insertBefore(scope.$seed.el, self.marker)
-        })
+var augmentations = {
+  remove: function (scope) {
+    this.splice(scope.$index, 1);
+  },
+  replace: function (index, data) {
+    if (typeof index !== 'number') {
+      index = index.$index
     }
+    this.splice(index, 1, data);
+  }
+};
+
+var mutationHandlers = {
+  push: function (m) {
+    var self = this
+    m.args.forEach(function (data, i) {
+      var seed = self.buildItem(data, self.collection.length + i)
+      self.container.insertBefore(seed.el, self.marker)
+    })
+  },
+  pop: function (m) {
+    m.result.$destroy()
+  },
+  unshift: function (m) {
+    var self = this
+    m.args.forEach(function (data, i) {
+        var seed = self.buildItem(data, i)
+        self.container.insertBefore(seed.el, self.collection[m.args.length].$seed.el)
+    })
+    self.reorder()
+  },
+  shift: function (m) {
+    m.result.$destroy()
+    var self = this
+    self.reorder()
+  },
+  splice: function (m) {
+    var self = this;
+    var index = m.args[0];
+    var removed = m.args[1];
+    var added = m.args.length - 2;
+
+    m.result.forEach(function (scope) {
+      scope.$destroy();
+    })
+
+    if (added > 0) {
+      m.args.slice(2).forEach(function (data, i) {
+        var seed  = self.buildItem(data, index + i);
+        var pos = index - removed + added + 1;
+        var ref = self.collection[pos] ? self.collection[pos].$seed.el : self.marker;
+        self.container.insertBefore(seed.el, ref);
+      })
+    }
+    if (removed !== added) {
+      self.reorder();
+    }
+  },
+  sort: function () {
+    var self = this;
+    self.collection.forEach(function (scope, i) {
+      scope.$index = i
+      self.container.insertBefore(scope.$seed.el, self.marker)
+    });
+  }
 }
 mutationHandlers.reverse = mutationHandlers.sort
 
-function watchArray (arr, callback) {
+function watchArray (collection, callback) {
   Object.keys(mutationHandlers).forEach(function (method) {
-    arr[method] = function () {
+    collection[method] = function () {
       var result = Array.prototype[method].apply(this, arguments)
       callback({
         method: method,
@@ -61,7 +78,11 @@ function watchArray (arr, callback) {
         result: result
       })
     }
-  })
+  });
+
+  for (var method in augmentations) {
+    collection[method] = augmentations[method];
+  }
 }
 
 module.exports = {
@@ -85,7 +106,10 @@ module.exports = {
 
     watchArray(collection, function (mutation) {
       if (self.mutationHandlers) {
-        self.mutationHandlers[mutation.method].call(self, mutation)
+        self.mutationHandlers[mutation.method].call(self, mutation);
+      }
+      if (self.binding.refreshDependents) {
+        self.binding.refreshDependents();
       }
     });
 

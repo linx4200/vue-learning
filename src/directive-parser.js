@@ -2,19 +2,61 @@ var config = require('./config');
 var directives = require('./directives');
 var filters = require('./filters');
 
-var KEY_RE          = /^[^\|<]+/; // 排除了 < 
+var KEY_RE = /^[^\|<]+/; // 排除了 < 
 var ARG_RE          = /([^:]+):(.+)$/;
 var FILTERS_RE      = /\|[^\|<]+/g;
 var FILTER_TOKEN_RE = /[^\s']+|'[^']+'/g;
 var DEPS_RE         = /<[^<\|]+/g;
+var NESTING_RE      = /^\^+/;
+
+// parse a key, extract argument and nesting/root info
+function parseKey (rawKey) {
+
+  var res = {};
+  var argMatch = rawKey.match(ARG_RE);
+
+  res.key = argMatch ? argMatch[2].trim() : rawKey.trim();
+
+  res.arg = argMatch ? argMatch[1].trim() : null;
+
+  var nesting = res.key.match(NESTING_RE);
+  res.nesting = nesting  ? nesting[0].length : false;
+
+  res.root = res.key.charAt(0) === '$';
+
+  if (res.nesting) {
+    res.key = res.key.replace(NESTING_RE, '')
+  } else if (res.root) {
+    res.key = res.key.slice(1)
+  }
+
+  return res
+}
+
+function parseFilter (filter) {
+  var tokens = filter
+    .slice(1)
+    .match(FILTER_TOKEN_RE)
+    .map(function (token) {
+      return token.replace(/'/g, '').trim()
+    });
+
+  return {
+    name : tokens[0],
+    apply : filters[tokens[0]],
+    args : tokens.length > 1 ? tokens.slice(1) : null
+  }
+}
 
 function Directive (directiveName, expression) {
 
-  var directive = directives[directiveName]
+  var prop;
+  var directive = directives[directiveName];
+
   if (typeof directive === 'function') {
     this._update = directive
   } else {
-    for (var prop in directive) {
+    for (prop in directive) {
       if (prop === 'update') {
         this['_update'] = directive.update
       } else {
@@ -27,35 +69,14 @@ function Directive (directiveName, expression) {
   this.expression = expression;
 
   var rawKey   = expression.match(KEY_RE)[0]; // guarded in parse
-  var argMatch = rawKey.match(ARG_RE);
+  var keyInfo  = parseKey(rawKey);
 
-  this.key = argMatch
-      ? argMatch[2].trim()
-      : rawKey.trim()
-
-  this.arg = argMatch
-      ? argMatch[1].trim()
-      : null
-  
-  var filterExps = expression.match(FILTERS_RE)
-  if (filterExps) {
-      this.filters = filterExps.map(function (filter) {
-          var tokens = filter.slice(1)
-              .match(FILTER_TOKEN_RE)
-              .map(function (token) {
-                return token.replace(/'/, '').trim()
-              })
-          return {
-            name  : tokens[0],
-            apply : filters[tokens[0]],
-            args  : tokens.length > 1
-                    ? tokens.slice(1)
-                    : null
-          }
-      })
-  } else {
-    this.filters = null
+  for (prop in keyInfo) {
+    this[prop] = keyInfo[prop];
   }
+  
+  var filterExps = expression.match(FILTERS_RE);
+  this.filters = filterExps ? filterExps.map(parseFilter) : null;
 
   // 记录依赖
   // completed < remaining total
@@ -63,11 +84,23 @@ function Directive (directiveName, expression) {
   // remaining 或 total 变化需要通知到 completed
   var depExp = expression.match(DEPS_RE); // /<[^<\|]+/g;
   if (depExp) {
-    this.deps = depExp[0].slice(1).trim().split(/\s+/); // ['remaining', 'total']
+    this.deps = depExp ? depExp[0].slice(1).trim().split(/\s+/).map(parseKey) : null; // ['remaining', 'total']
+  }
+}
+
+// called when a dependency has changed
+Directive.prototype.refresh = function () {
+  if (this.value) {
+    this._update(this.value.call(this.seed.scope));
+  }
+  if (this.binding.refreshDependents) {
+    this.binding.refreshDependents();
   }
 }
 
 Directive.prototype.update = function (value) {
+  this.value = value;
+
   // computed property
   if (typeof value === 'function' && !this.fn) {
     value = value();
@@ -77,7 +110,9 @@ Directive.prototype.update = function (value) {
   if (this.filters) {
     value = this.applyFilters(value)
   }
-  this._update(value)
+  this._update(value);
+
+  if (this.deps) this.refresh();
 }
 
 Directive.prototype.applyFilters = function (value) {
