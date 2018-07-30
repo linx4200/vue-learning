@@ -48,11 +48,13 @@ api.controller = function (id, extensions) {
 }
 
 api.directive = function (name, fn) {
-  directives[name] = fn
+  if (!fn) return directives[name];
+  directives[name] = fn;
 }
 
 api.filter = function (name, fn) {
-  filters[name] = fn
+  if (!fn) return filters[name];
+  filters[name] = fn;
 }
 
 api.bootstrap = function (opts) {

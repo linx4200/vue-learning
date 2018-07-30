@@ -52,73 +52,77 @@ var mutationHandlers = {
 mutationHandlers.reverse = mutationHandlers.sort
 
 function watchArray (arr, callback) {
-    Object.keys(mutationHandlers).forEach(function (method) {
-        arr[method] = function () {
-            var result = Array.prototype[method].apply(this, arguments)
-            callback({
-                method: method,
-                args: Array.prototype.slice.call(arguments),
-                result: result
-            })
-        }
-    })
+  Object.keys(mutationHandlers).forEach(function (method) {
+    arr[method] = function () {
+      var result = Array.prototype[method].apply(this, arguments)
+      callback({
+        method: method,
+        args: Array.prototype.slice.call(arguments),
+        result: result
+      })
+    }
+  })
 }
 
 module.exports = {
 
-    bind: function () {
-        this.el.removeAttribute(config.prefix + '-each')
-        var ctn = this.container = this.el.parentNode
-        this.marker = document.createComment('sd-each-' + this.arg)
-        ctn.insertBefore(this.marker, this.el)
-        ctn.removeChild(this.el);
-    },
+  mutationHandlers: mutationHandlers,
 
-    update: function (collection) {
-        this.unbind(true);
-        if (!Array.isArray(collection)) return;
-        this.collection = collection;
+  bind: function () {
+    this.el.removeAttribute(config.prefix + '-each')
+    var ctn = this.container = this.el.parentNode
+    this.marker = document.createComment('sd-each-' + this.arg)
+    ctn.insertBefore(this.marker, this.el)
+    ctn.removeChild(this.el);
+  },
 
-        var self = this;
+  update: function (collection) {
+    this.unbind(true);
+    if (!Array.isArray(collection)) return;
+    this.collection = collection;
 
-        watchArray(collection, function (mutation) {
-          mutationHandlers[mutation.method].call(self, mutation);
-        });
+    var self = this;
 
-        collection.forEach(function (data, i) {
-          var seed = self.buildItem(data, i);
-          self.container.insertBefore(seed.el, self.marker);
-        });
-    },
-
-    buildItem: function (data, index, collection) {
-      var Seed = require('../seed');
-      var node = this.el.cloneNode(true);
-
-      var spore = new Seed(node, {
-        each: true,
-        eachPrefixRE: new RegExp('^' + this.arg + '.'),
-        parentSeed: this.seed,
-        index: index,
-        data: data
-      });
-      this.collection[index] = spore.scope;
-      return spore;
-    },
-
-    reorder: function () {
-      this.collection.forEach(function (scope, i) {
-        scope.$index = i;
-      })
-    },
-
-    unbind: function (rm) {
-      if (this.collection && this.collection.length) {
-        var fn = rm ? '_destroy' : '_unbind'
-        this.collection.forEach(function (scope) {
-          scope.$seed[fn]()
-        })
-        this.collection = null
+    watchArray(collection, function (mutation) {
+      if (self.mutationHandlers) {
+        self.mutationHandlers[mutation.method].call(self, mutation)
       }
+    });
+
+    collection.forEach(function (data, i) {
+      var seed = self.buildItem(data, i);
+      self.container.insertBefore(seed.el, self.marker);
+    });
+  },
+
+  buildItem: function (data, index, collection) {
+    var Seed = require('../seed');
+    var node = this.el.cloneNode(true);
+
+    var spore = new Seed(node, {
+      each: true,
+      eachPrefixRE: new RegExp('^' + this.arg + '.'),
+      parentSeed: this.seed,
+      index: index,
+      data: data
+    });
+    this.collection[index] = spore.scope;
+    return spore;
+  },
+
+  reorder: function () {
+    this.collection.forEach(function (scope, i) {
+      scope.$index = i;
+    })
+  },
+
+  unbind: function (rm) {
+    if (this.collection && this.collection.length) {
+      var fn = rm ? '_destroy' : '_unbind'
+      this.collection.forEach(function (scope) {
+        scope.$seed[fn]()
+      })
+      this.collection = null
     }
+  }
 }

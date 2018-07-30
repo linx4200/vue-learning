@@ -47,7 +47,7 @@ Seed.controller('Todos', function (scope, seed) {
   }
 
   scope.toggleTodo = function (e) {
-    e.seed.scope.done = !e.scope.done;
+    e.scope.done = !e.scope.done;
     scope.remaining += e.scope.done ? -1 : 1;
   }
 
