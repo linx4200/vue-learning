@@ -19,11 +19,13 @@ Seed.controller('Todos', function (scope) {
   }, 0)
 
   // computed properties
-  scope.total = todos.length;
+  // computed properties 都必须是函数
+  scope.total = function () {
+    return scope.todos.length;
+  }
 
   scope.remaining = function () {
-    // TODO: 依赖变化(total 和 remaining 变化)不会触发 setter
-    return scope.todos.total - scope.completed
+    return scope.todos.length - scope.completed
   }
 
   // event handlers

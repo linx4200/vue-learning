@@ -84,12 +84,14 @@ function Directive (directiveName, expression) {
   // remaining 或 total 变化需要通知到 completed
   var depExp = expression.match(DEPS_RE); // /<[^<\|]+/g;
   if (depExp) {
-    this.deps = depExp ? depExp[0].slice(1).trim().split(/\s+/).map(parseKey) : null; // ['remaining', 'total']
+    this.deps = depExp ? depExp[0].slice(1).trim().split(/\s+/).map(parseKey) : null;
+    // [{ key: 'todos' }]
   }
 }
 
 // called when a dependency has changed
 Directive.prototype.refresh = function () {
+
   if (this.value) {
     this._update(this.value.call(this.seed.scope));
   }
@@ -110,6 +112,7 @@ Directive.prototype.update = function (value) {
   if (this.filters) {
     value = this.applyFilters(value)
   }
+
   this._update(value);
 
   if (this.deps) this.refresh();

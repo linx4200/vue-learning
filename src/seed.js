@@ -12,7 +12,7 @@ var ancestorKeyRE = /\^/g;
 var ctrlAttr = config.prefix + '-controller';
 var eachAttr = config.prefix + '-each';
 
-function determinScope (key, scope) {
+function determineScope (key, scope) {
   if (key.nesting) {
     var levels = key.nesting
     while (scope.parentSeed && levels--) {
@@ -164,17 +164,12 @@ Seed.prototype._bind = function (node, directive) {
     scope = this.parentSeed
   }
 
-  var ownerScope = determinScope(directive, scope);
+  var ownerScope = determineScope(directive, scope);
   var binding = ownerScope._bindings[key] || ownerScope._createBinding(key);
 
   // add directive to this binding
   binding.instances.push(directive);
   directive.binding = binding;
-
-  // TODO: 我自己加的，处理依赖
-  // if (directive.deps) {
-  //   binding.deps = directive.deps;
-  // }
 
   // invoke bind hook if exists
   if (directive.bind) {
@@ -189,17 +184,18 @@ Seed.prototype._bind = function (node, directive) {
   // computed properties
   if (directive.deps) {
     directive.deps.forEach(function (dep) {
-      var depScope = determinScope(dep, scope);
+      var depScope = determineScope(dep, scope);
       var depBinding = depScope._bindings[dep.key] || depScope._createBinding(dep.key);
+      
       if (!depBinding.dependents) {
-        depBinding.dependents = []
+        depBinding.dependents = [];
         depBinding.refreshDependents = function () {
           depBinding.dependents.forEach(function (dept) {
-            dept.refresh()
+            dept.refresh();
           })
         }
       }
-      depBinding.dependents.push(directive)
+      depBinding.dependents.push(directive);
     })
   }
 }
