@@ -26,8 +26,9 @@ var mutationHandlers = {
   unshift: function (m) {
     var self = this
     m.args.forEach(function (data, i) {
-        var seed = self.buildItem(data, i)
-        self.container.insertBefore(seed.el, self.collection[m.args.length].$seed.el)
+      var seed = self.buildItem(data, i);
+      var ref  = self.collection.length > m.args.length ? self.collection[m.args.length].$seed.el : self.marker;
+      self.container.insertBefore(seed.el, ref);
     })
     self.reorder()
   },
@@ -90,8 +91,8 @@ module.exports = {
   mutationHandlers: mutationHandlers,
 
   bind: function () {
-    this.el.removeAttribute(config.prefix + '-each')
-    var ctn = this.container = this.el.parentNode
+    this.el.removeAttribute(config.prefix + '-each');
+    var ctn = this.container = this.el.parentNode;
     this.marker = document.createComment('sd-each-' + this.arg)
     ctn.insertBefore(this.marker, this.el)
     ctn.removeChild(this.el);

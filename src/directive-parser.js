@@ -93,7 +93,8 @@ function Directive (directiveName, expression) {
 Directive.prototype.refresh = function () {
 
   if (this.value) {
-    this._update(this.value.call(this.seed.scope));
+    var value = this.value.call(this.seed.scope);
+    this._update(this.filters ? this.applyFilters(value) : value);
   }
   if (this.binding.refreshDependents) {
     this.binding.refreshDependents();
@@ -101,6 +102,8 @@ Directive.prototype.refresh = function () {
 }
 
 Directive.prototype.update = function (value) {
+  if (value && (value === this.value)) return;
+
   this.value = value;
 
   // computed property
@@ -108,18 +111,13 @@ Directive.prototype.update = function (value) {
     value = value();
   }
 
-  // apply filters
-  if (this.filters) {
-    value = this.applyFilters(value)
-  }
-
-  this._update(value);
+  this._update(this.filters ? this.applyFilters(value) : value);
 
   if (this.deps) this.refresh();
 }
 
 Directive.prototype.applyFilters = function (value) {
-  var filtered = value
+  var filtered = value;
   this.filters.forEach(function (filter) {
     if (!filter.apply) throw new Error('Unknown filter: ' + filter.name)
     filtered = filter.apply(filtered, filter.args)

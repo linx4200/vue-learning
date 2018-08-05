@@ -1,4 +1,3 @@
-var Emitter = require('./emitter');
 var config = require('./config');
 var DirectiveParser = require('./directive-parser');
 var TextNodeParser = require('./textnode-parser');
@@ -7,8 +6,6 @@ var TextNodeParser = require('./textnode-parser');
 // var each = Array.prototype.forEach
 var slice = Array.prototype.slice;
 
-var ancestorKeyRE = /\^/g;
-// var rootKeyRE = /^\$/;
 var ctrlAttr = config.prefix + '-controller';
 var eachAttr = config.prefix + '-each';
 
@@ -46,20 +43,24 @@ function Seed (el, options) {
 
   // initialize the scope object
   var dataPrefix = config.prefix + '-data';
-  this.scope =
+  var scope = this.scope =
     (options && options.data)
     || config.datum[el.getAttribute(dataPrefix)]
     || {};
 
   el.removeAttribute(dataPrefix);
 
+  // if the passed in data is already consumed by
+  // a Seed instance, make a copy from it
+  if (scope.$seed) {
+    scope = this.scope = scope.$dump();
+  }
+
   this.scope.$seed = this;
   this.scope.$destroy = this._destroy.bind(this);
   this.scope.$dump = this._dump.bind(this);
   this.scope.$index = options.index;
   this.scope.$parent  = options.parentSeed && options.parentSeed.scope;
-  this.scope.$on = this.on.bind(this)
-  this.scope.$emit = this.emit.bind(this)
 
   // recursively process nodes for directives
   this._compileNode(el, true);
@@ -75,16 +76,6 @@ function Seed (el, options) {
       console.warn('controller ' + ctrlID + ' is not defined.');
     }
   }
-
-  // TODO: 我自己加的处理依赖
-  for(var key in this._bindings) {
-    const binding = this._bindings[key];
-    if (binding.deps) {
-      binding.deps.forEach(dep => {
-        // 搞不了了，这样不能把 binding.deps update 的时候，也调用 this._bindings[key] 的 update
-      })
-    }
-  }
 }
 
 Seed.prototype._compileNode = function (node, root) {
@@ -93,7 +84,7 @@ Seed.prototype._compileNode = function (node, root) {
   if(node.nodeType === 3) {
     // text  node
     self._compileTextNode(node)
-  } else {
+  } else if (node.nodeType !== 8) { // exclude comment nodes
     var eachExp = node.getAttribute(eachAttr);
     var ctrlExp = node.getAttribute(ctrlAttr);
 
@@ -177,9 +168,7 @@ Seed.prototype._bind = function (node, directive) {
   }
 
   // set initial value
-  if (binding.value) {
-    directive.update(binding.value);
-  }
+  directive.update(binding.value);
 
   // computed properties
   if (directive.deps) {
@@ -277,7 +266,5 @@ Seed.prototype._dump = function () {
   }
   return dump
 }
-
-Emitter(Seed.prototype);
 
 module.exports = Seed;

@@ -54,7 +54,7 @@ app.use(hotMiddleware)
 
 // serve pure static assets
 // var staticPath = path.posix.join(config.dev.assetsPublicPath, config.dev.assetsSubDirectory)
-// app.use(staticPath, express.static('./static'))
+app.use('/static', express.static(path.join(__dirname, '../examples')));
 // app.use('/src', express.static('src'))
 
 // app.get('/src/*', function(req, res) {
